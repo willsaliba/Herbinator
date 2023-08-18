@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio Version 17
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MusicMagic - Standalone Plugin", "MusicMagic_StandalonePlugin.vcxproj", "{1461998A-A355-8EE2-D227-6F86478D67AA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E} = {01D0C0FD-749E-8E74-1601-9B2213FC871E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MusicMagic - VST3", "MusicMagic_VST3.vcxproj", "{4C9B9B33-7F15-671D-6981-E02BFFE63E5F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E} = {01D0C0FD-749E-8E74-1601-9B2213FC871E}
+		{04E62899-3895-94EB-8671-0F5087548DDD} = {04E62899-3895-94EB-8671-0F5087548DDD}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MusicMagic - Shared Code", "MusicMagic_SharedCode.vcxproj", "{01D0C0FD-749E-8E74-1601-9B2213FC871E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MusicMagic - VST3 Manifest Helper", "MusicMagic_VST3ManifestHelper.vcxproj", "{04E62899-3895-94EB-8671-0F5087548DDD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4C9B9B33-7F15-671D-6981-E02BFFE63E5F}.Debug|x64.ActiveCfg = Debug|x64
+		{4C9B9B33-7F15-671D-6981-E02BFFE63E5F}.Debug|x64.Build.0 = Debug|x64
+		{4C9B9B33-7F15-671D-6981-E02BFFE63E5F}.Release|x64.ActiveCfg = Release|x64
+		{4C9B9B33-7F15-671D-6981-E02BFFE63E5F}.Release|x64.Build.0 = Release|x64
+		{1461998A-A355-8EE2-D227-6F86478D67AA}.Debug|x64.ActiveCfg = Debug|x64
+		{1461998A-A355-8EE2-D227-6F86478D67AA}.Debug|x64.Build.0 = Debug|x64
+		{1461998A-A355-8EE2-D227-6F86478D67AA}.Release|x64.ActiveCfg = Release|x64
+		{1461998A-A355-8EE2-D227-6F86478D67AA}.Release|x64.Build.0 = Release|x64
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E}.Debug|x64.ActiveCfg = Debug|x64
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E}.Debug|x64.Build.0 = Debug|x64
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E}.Release|x64.ActiveCfg = Release|x64
+		{01D0C0FD-749E-8E74-1601-9B2213FC871E}.Release|x64.Build.0 = Release|x64
+		{04E62899-3895-94EB-8671-0F5087548DDD}.Debug|x64.ActiveCfg = Debug|x64
+		{04E62899-3895-94EB-8671-0F5087548DDD}.Debug|x64.Build.0 = Debug|x64
+		{04E62899-3895-94EB-8671-0F5087548DDD}.Release|x64.ActiveCfg = Release|x64
+		{04E62899-3895-94EB-8671-0F5087548DDD}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
