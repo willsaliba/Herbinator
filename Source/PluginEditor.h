@@ -26,6 +26,9 @@ public:
 
 private:
     
+    //input
+    juce::TextButton input_play_button;
+    
     //randomness
     juce::Slider RandomnessSlider;
     
@@ -34,6 +37,18 @@ private:
     juce::ToggleButton fillButton;
     juce::ToggleButton replaceButton;
     juce::ToggleButton generateButton;
+    
+    //prompt
+    juce::TextEditor userPrompt;
+    
+    //generate button
+    juce::TextButton generate_music_button;
+    
+    //output
+    juce::TextButton output_play_button;
+    juce::TextButton output_copy_button;
+    
+    
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& audioProcessor;
