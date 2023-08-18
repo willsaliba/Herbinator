@@ -26,11 +26,14 @@ public:
 
 private:
     
+    //randomness
     juce::Slider RandomnessSlider;
     
-    
-    
-    
+    //actions
+    juce::ToggleButton extendButton;
+    juce::ToggleButton fillButton;
+    juce::ToggleButton replaceButton;
+    juce::ToggleButton generateButton;
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& audioProcessor;
