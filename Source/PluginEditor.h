@@ -1,28 +1,26 @@
-/*
-  ==============================================================================
-    This file contains the basic framework code for a JUCE plugin editor.
-    --- THIS IS FRONT END ---
-  ==============================================================================
-*/
+/* JUCE Plugin Editor --- FRONT END --- */
 
 #pragma once
-
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-
 //==============================================================================
-/**
-*/
-class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor
+
+class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                        public juce::FileDragAndDropTarget
 {
 public:
+    //constructor & destructor
     MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor&);
     ~MusicMagicAudioProcessorEditor() override;
-
-    //==============================================================================
+    
+    //building window
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    //file drag&drop
+    bool isInterestedInFileDrag (const juce::StringArray &files) override;
+    void filesDropped (const juce::StringArray &files, int x, int y) override;
 
 private:
     
@@ -47,8 +45,6 @@ private:
     //output
     juce::TextButton output_play_button;
     juce::TextButton output_copy_button;
-    
-    
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& audioProcessor;

@@ -1,10 +1,3 @@
-/*
-  ==============================================================================
-    This file contains the basic framework code for a JUCE plugin editor.
-    FRONTEND
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -13,7 +6,7 @@
 //CONSTRUCTOR
 MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
-{   //initialisomg components
+{   //initialising functional components
     
     //input
     input_play_button.setButtonText("P");
@@ -65,13 +58,16 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     setSize (500, 600);
 }
 
+//DESTRUCTOR
 MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor()
 {
 }
 
 //==============================================================================
+
 void MusicMagicAudioProcessorEditor::paint (juce::Graphics& g)
-{
+{   //non-functional graphics
+    
     //background colour
     g.fillAll(juce::Colour(0x21, 0x21, 0x21));
         
@@ -126,7 +122,7 @@ void MusicMagicAudioProcessorEditor::paint (juce::Graphics& g)
 }
 
 void MusicMagicAudioProcessorEditor::resized()
-{   //psoitioning components
+{   //positioning components
     
     //input
     input_play_button.setBounds(440, 35, 30, 30);
@@ -150,3 +146,28 @@ void MusicMagicAudioProcessorEditor::resized()
     output_play_button.setBounds(400, 535, 30, 30);
     output_copy_button.setBounds(440, 535, 30, 30);
 }
+
+
+bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray &files)
+{
+    //checking if is an audio file
+    for (auto file : files) {
+        if (file.contains(".wav") || file.contains(".mp3") || file.contains(".aif")) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void MusicMagicAudioProcessorEditor::filesDropped (const juce::StringArray &files, int x, int y)
+{
+    for (auto file : files) {
+        if ( isInterestedInFileDrag(files) ) {
+            //load file
+            
+            
+        }
+    }
+}
+
