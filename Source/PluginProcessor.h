@@ -18,7 +18,7 @@ class MusicMagicAudioProcessor  : public juce::AudioProcessor
                             #endif
 {
 public:
-    //==============================================================================
+    //constructor & destructor
     MusicMagicAudioProcessor();
     ~MusicMagicAudioProcessor() override;
 
@@ -38,7 +38,6 @@ public:
 
     //==============================================================================
     const juce::String getName() const override;
-
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
@@ -54,8 +53,24 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    //==============================================================================
+    
+    //custom methods:
+    void loadFile(const juce::String& path);
+    int getNumSamplerSounds() { return mSampler.getNumSounds(); }
+    void clearInputTrack();
 
 private:
+    
+    //variables for making sampler
+    juce::Synthesiser mSampler;
+    const int numVoices {1};
+    
+    //format manager for sampler
+    juce::AudioFormatManager mFormatManager;
+    juce::AudioFormatReader* mFormatReader {nullptr};
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)
 };

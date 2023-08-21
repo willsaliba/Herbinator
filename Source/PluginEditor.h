@@ -21,11 +21,14 @@ public:
     //file drag&drop
     bool isInterestedInFileDrag (const juce::StringArray &files) override;
     void filesDropped (const juce::StringArray &files, int x, int y) override;
+    void updateInputTrackDesign();
 
 private:
     
     //input
+    juce::TextButton input_load_box;
     juce::TextButton input_play_button;
+    juce::TextButton input_delete_button;
     
     //randomness
     juce::Slider RandomnessSlider;
@@ -47,7 +50,7 @@ private:
     juce::TextButton output_copy_button;
     
     // reference provided as quick way for editor to access processor object that created it.
-    MusicMagicAudioProcessor& audioProcessor;
+    MusicMagicAudioProcessor& MusMagProcessor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessorEditor)
 };

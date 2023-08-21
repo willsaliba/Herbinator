@@ -5,13 +5,22 @@
 
 //CONSTRUCTOR
 MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+    : AudioProcessorEditor (&p), MusMagProcessor (p)
 {   //initialising functional components
     
     //input
+    input_load_box.setButtonText("Drag and Drop Track Segment");
+    input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    addAndMakeVisible(input_load_box);
+    
     input_play_button.setButtonText("P");
     input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     addAndMakeVisible(input_play_button);
+    
+    input_delete_button.setButtonText("D");
+    input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    input_delete_button.onClick = [&]() { MusMagProcessor.clearInputTrack(); updateInputTrackDesign(); };
+    addAndMakeVisible(input_delete_button);
 
     //RANDOMNESS SLIDER
     RandomnessSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
@@ -125,7 +134,10 @@ void MusicMagicAudioProcessorEditor::resized()
 {   //positioning components
     
     //input
-    input_play_button.setBounds(440, 35, 30, 30);
+    input_load_box.setBounds(135, 20, 250, 60);
+    input_play_button.setBounds(400, 35, 30, 30);
+    input_delete_button.setBounds(440, 35, 30, 30);
+    
     
     //randomness
     RandomnessSlider.setBounds(330, 150, 150, 150); //x, y, w, h
@@ -148,26 +160,35 @@ void MusicMagicAudioProcessorEditor::resized()
 }
 
 
-bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray &files)
-{
-    //checking if is an audio file
+//checking if is valid audio file
+bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray &files) {
     for (auto file : files) {
         if (file.contains(".wav") || file.contains(".mp3") || file.contains(".aif")) {
             return true;
         }
     }
-    
     return false;
 }
 
-void MusicMagicAudioProcessorEditor::filesDropped (const juce::StringArray &files, int x, int y)
-{
+//Dropping a file in
+void MusicMagicAudioProcessorEditor::filesDropped (const juce::StringArray &files, int x, int y) {
+    //loading in files
     for (auto file : files) {
-        if ( isInterestedInFileDrag(files) ) {
-            //load file
-            
-            
+        if ( isInterestedInFileDrag(file) ) {
+            MusMagProcessor.loadFile(file);
         }
     }
+    //if successful repaint input box
+    updateInputTrackDesign();
 }
 
+void MusicMagicAudioProcessorEditor::updateInputTrackDesign() {
+    //if successful repaint input box
+    if (MusMagProcessor.getNumSamplerSounds() > 0) {
+        input_load_box.setButtonText("Track Segment Loaded");
+        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
+    } else {
+        input_load_box.setButtonText("Drag and Drop Track Segment");
+        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    }
+}
