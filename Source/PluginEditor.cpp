@@ -5,26 +5,32 @@
 
 //CONSTRUCTOR
 MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor& p)
-    : AudioProcessorEditor (&p), MusMagProcessor (p) {
-    
-    //input
+    : AudioProcessorEditor (&p), MusMagProcessor (p)
+{
+    //load button
     input_load_box.setButtonText("Drag and Drop Track Segment");
     input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    input_load_box.onClick = [&]() { MusMagProcessor.loadFile(); };
     addAndMakeVisible(input_load_box);
-    
+    //play
     input_play_button.setButtonText("P");
-    input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
-    input_delete_button.onClick = [&]() { MusMagProcessor.playSample(); };
+    input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+    input_delete_button.onClick = [&]() { MusMagProcessor.playButtonClicked(); };
     addAndMakeVisible(input_play_button);
-    
-    input_delete_button.setButtonText("D");
+    //stop
+    input_stop_button.setButtonText("S");
+    input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+    input_stop_button.onClick = [&]() { MusMagProcessor.stopButtonClicked(); };
+    addAndMakeVisible(input_stop_button);
+    //delete
+    input_delete_button.setButtonText("X");
     input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
-    input_delete_button.onClick = [&]() { MusMagProcessor.clearInputTrack(); updateInputTrackDesign(); };
+    input_delete_button.onClick = [&]() { ; };
     addAndMakeVisible(input_delete_button);
     
     //RANDOMNESS SLIDER
     RandomnessSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-    RandomnessSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 70, 30); //pos, read only, w, h
+    RandomnessSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 70, 30); 
     RandomnessSlider.setRange(0, 100);
     RandomnessSlider.setNumDecimalPlacesToDisplay(0);
     RandomnessSlider.setValue(50);
@@ -73,19 +79,18 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
 }
 
 //DESTRUCTOR
-MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor() {
-}
+MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor() {}
 
 //non-functional graphics
-void MusicMagicAudioProcessorEditor::paint (juce::Graphics& g) {
-    
+void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
+{
     //background colour
     g.fillAll(juce::Colour(0x21, 0x21, 0x21));
         
     //input square
-    g.setColour(juce::Colours::black); //inner
+    g.setColour(juce::Colours::black);
     g.fillRect(10, 10, 480, 80);
-    g.setColour(juce::Colour(25, 160, 250)); //border
+    g.setColour(juce::Colour(25, 160, 250));
     g.drawRect(juce::Rectangle<int>(10, 10, 480, 80), 2.0f);
     
     //action square
@@ -132,12 +137,13 @@ void MusicMagicAudioProcessorEditor::paint (juce::Graphics& g) {
 }
 
 //positioning of active elements
-void MusicMagicAudioProcessorEditor::resized() {
-    
+void MusicMagicAudioProcessorEditor::resized()
+{
     //input
-    input_load_box.setBounds(135, 20, 250, 60);
-    input_play_button.setBounds(400, 35, 30, 30);
-    input_delete_button.setBounds(440, 35, 30, 30);
+    input_load_box.setBounds(135, 20, 220, 60);
+    input_play_button.setBounds(365, 35, 30, 30);
+    input_stop_button.setBounds(405, 35, 30, 30);
+    input_delete_button.setBounds(445, 35, 30, 30);
     
     //randomness
     RandomnessSlider.setBounds(330, 150, 150, 150);
@@ -161,40 +167,9 @@ void MusicMagicAudioProcessorEditor::resized() {
     //in final \X/
     randBut.setBounds(160, 520, 90, 20); actionBut.setBounds(270, 520, 100, 20);
     promptBut.setBounds(160, 550, 210, 20);
-    
 }
 
-//==============================================================================Custom Functions
-
-//checking if is valid audio file
-bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray &files) {
-    for (auto file : files) {
-        if (file.contains(".wav") || file.contains(".mp3") || file.contains(".aif")) {
-            return true;
-        }
-    }
-    return false;
-}
-
-//Calling plugin processor to load in files
-void MusicMagicAudioProcessorEditor::filesDropped (const juce::StringArray &files, int x, int y) {
-    //loading in file
-    for (auto file : files) {
-        if ( isInterestedInFileDrag(file) ) MusMagProcessor.loadFile(file);
-    }
-    updateInputTrackDesign();
-}
-
-//changing appearance of input track based on whether empty or not
-void MusicMagicAudioProcessorEditor::updateInputTrackDesign() {
-    if (MusMagProcessor.getNumSamplerSounds() > 0) {
-        input_load_box.setButtonText("Track Segment Loaded");
-        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
-    } else {
-        input_load_box.setButtonText("Drag and Drop Track Segment");
-        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
-    }
-}
+//============================================================================== GENERAL
 
 //ensuring only 1 action button can be pressed at a time
 void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton) {
@@ -205,20 +180,35 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton) {
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
 }
 
+//updating DAW when file loaded
+/*changing appearance of input track based on whether empty or not
+//void MusicMagicAudioProcessorEditor::updateInputTrackDesign() {
+//    if (MusMagProcessor.getNumSamplerSounds() > 0) {
+//        input_load_box.setButtonText("Track Segment Loaded");
+//        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
+//    } else {
+//        input_load_box.setButtonText("Drag and Drop Track Segment");
+//        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+//    }
+//} */
+
+//============================================================================== Making Request
+
 //checking if all input fields are valid to make request
-bool MusicMagicAudioProcessorEditor::check_valid_request() {
+bool MusicMagicAudioProcessorEditor::check_valid_request()
+{
     //checking action
     bool action_selected = false;
     if (extendButton.getToggleState() || fillButton.getToggleState() ||
-        replaceButton.getToggleState() || generateButton.getToggleState() ) {
-        action_selected = true;
-    }
+        replaceButton.getToggleState() || generateButton.getToggleState() ) action_selected = true;
     //check prompt
     juce::String userInput = userPrompt.getText();
     std::string promptStr = userInput.toStdString();
     
+    //returning true if valid
     if (promptStr != "" && action_selected) return true;
     
+    //chaning UI if false
     generate_music_button.setButtonText("Invalid Request!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
     startTimer(2500);
@@ -226,7 +216,8 @@ bool MusicMagicAudioProcessorEditor::check_valid_request() {
 }
 
 //generating request
-void MusicMagicAudioProcessorEditor::generate_request() {
+void MusicMagicAudioProcessorEditor::generate_request()
+{
     if (check_valid_request()) {
         //converting to integer
         juce::Value slider_value = RandomnessSlider.getValueObject();
@@ -249,7 +240,8 @@ void MusicMagicAudioProcessorEditor::generate_request() {
 }
 
 //sending the request and updating UI elements
-void MusicMagicAudioProcessorEditor::send_request(juce::String prompt, juce::String action, juce::String randomness) {
+void MusicMagicAudioProcessorEditor::send_request(juce::String prompt, juce::String action, juce::String randomness)
+{
     //in final send this request to plugin processor
     generate_music_button.setButtonText("Request Sent!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::purple);
@@ -261,7 +253,8 @@ void MusicMagicAudioProcessorEditor::send_request(juce::String prompt, juce::Str
 }
 
 //resetting elements after making request
-void MusicMagicAudioProcessorEditor::timerCallback() {
+void MusicMagicAudioProcessorEditor::timerCallback()
+{
     stopTimer();
     generate_music_button.setButtonText("GENERATE MUSIC!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
@@ -269,5 +262,4 @@ void MusicMagicAudioProcessorEditor::timerCallback() {
     promptBut.setVisible(false); actionBut.setVisible(false); randBut.setVisible(false);
 }
 
-
-
+//============================================================================== NEW
