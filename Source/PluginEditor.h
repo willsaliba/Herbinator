@@ -8,6 +8,7 @@ class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                         private juce::Timer
 {
 public:
+    
     //constructor & destructor
     MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor&);
     ~MusicMagicAudioProcessorEditor() override;
@@ -16,15 +17,14 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     
-    
-    
 private:
     //input
     juce::TextButton input_load_box;
-    juce::TextButton input_play_button;
-    juce::TextButton input_stop_button;
     juce::TextButton input_delete_button;
     void updateInputTrackDesign();
+    void deleteButtonClicked();
+    //juce::TextButton input_play_button;
+    //juce::TextButton input_stop_button;
     
     //randomness
     juce::Slider RandomnessSlider;

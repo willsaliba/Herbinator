@@ -21,10 +21,74 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor()
 
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
-    mFormatReader = nullptr;
+    mSampler.clearSounds();
+    if (mFormatReader) {
+        delete mFormatReader;
+        mFormatReader = nullptr;
+    }
 }
 
+//============================================================================== PREDEFINED BUT HAS IMPLEMENTATION
+
+void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    juce::ScopedNoDenormals noDenormals;
+    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
+
+    //parses through midi for us
+    mSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+}
+
+void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{ mSampler.setCurrentPlaybackSampleRate(sampleRate); }
+
+//============================================================================== CUSTOM FUNCTIONALITY
+
+void MusicMagicAudioProcessor::loadFile()
+{
+    //selecting file from directory
+    juce::FileChooser chooser { "Please load a file" };
+    if ( chooser.browseForFileToOpen() ) {
+        auto file = chooser.getResult();
+        mFormatReader = mFormatManager.createReaderFor(file);
+    }
+
+    //adding sound to Sampler
+    juce::BigInteger range;
+    range.setRange(0, 128, true);
+    mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
+}
+
+void MusicMagicAudioProcessor::clearSampler()
+{
+    mSampler.clearSounds();
+    if (mFormatReader) {
+        delete mFormatReader;
+        mFormatReader = nullptr;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void MusicMagicAudioProcessor::playButtonClicked() {}
+void MusicMagicAudioProcessor::stopButtonClicked() {}
+
+
 //============================================================================== UNTOUCHED
+//==============================================================================
 
 const juce::String MusicMagicAudioProcessor::getName() const
 { return JucePlugin_Name;}
@@ -41,9 +105,6 @@ void MusicMagicAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 void MusicMagicAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 { }
 
-//============================================================================== PREDEFINED BUT HAS IMPLEMENTATION
-
-//UNTOUCHED
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
@@ -65,47 +126,6 @@ bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
   #endif
 }
 #endif
-
-//TOUCHED
-void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    //parses through midi for us
-    mSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-}
-
-//TOUCHED
-void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
-    mSampler.setCurrentPlaybackSampleRate(sampleRate);
-}
-
-//============================================================================== CUSTOM FUNCTIONALITY
-
-void MusicMagicAudioProcessor::loadFile()
-{
-    //selecting file from directory
-    juce::FileChooser chooser { "Please load a file" };
-    if ( chooser.browseForFileToOpen() ) {
-        auto file = chooser.getResult();
-        mFormatReader = mFormatManager.createReaderFor(file);
-    }
-
-    //adding sound to Sampler
-    juce::BigInteger range;
-    range.setRange(0, 128, true);
-    mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
-
-}
-
-
-void MusicMagicAudioProcessor::playButtonClicked() {}
-void MusicMagicAudioProcessor::stopButtonClicked() {}
 
 //==============================================================================
 
