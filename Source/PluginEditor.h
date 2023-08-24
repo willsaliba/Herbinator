@@ -5,7 +5,8 @@
 #include "PluginProcessor.h"
 
 class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                        private juce::Timer
+                                        private juce::Timer,
+                                        public juce::FileDragAndDropTarget
 {
 public:
     
@@ -17,14 +18,16 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     
+    //drag and drop files in:
+    bool isInterestedInFileDrag (const juce::StringArray& files) override;
+    void filesDropped (const juce::StringArray &files, int x, int y) override;
+    
 private:
     //input
     juce::TextButton input_load_box;
     juce::TextButton input_delete_button;
     void updateInputTrackDesign();
     void deleteButtonClicked();
-    //juce::TextButton input_play_button;
-    //juce::TextButton input_stop_button;
     
     //randomness
     juce::Slider RandomnessSlider;
@@ -59,3 +62,8 @@ private:
     MusicMagicAudioProcessor& MusMagProcessor;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessorEditor)
 };
+
+
+//redacted:
+//juce::TextButton input_play_button;
+//juce::TextButton input_stop_button;

@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
+//=============================================== con/de-structors + building page
 
 //CONSTRUCTOR
 MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor& p)
@@ -149,9 +149,8 @@ void MusicMagicAudioProcessorEditor::resized()
 {
     //input
     input_load_box.setBounds(150, 20, 260, 60);
-    input_delete_button.setBounds(445, 35, 30, 30);
-    /*input_play_button.setBounds(365, 35, 30, 30);
-    input_stop_button.setBounds(405, 35, 30, 30);*/
+    input_delete_button.setBounds(440, 35, 30, 30);
+    /*input_play_button.setBounds(365, 35, 30, 30);input_stop_button.setBounds(405, 35, 30, 30);*/
     
     //randomness
     RandomnessSlider.setBounds(330, 150, 150, 150);
@@ -177,7 +176,7 @@ void MusicMagicAudioProcessorEditor::resized()
     promptBut.setBounds(160, 560, 210, 20);
 }
 
-//============================================================================== GENERAL
+//========================================================================= GENERAL
 
 //ensuring only 1 action button can be pressed at a time
 void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton) {
@@ -202,7 +201,7 @@ void MusicMagicAudioProcessorEditor::updateInputTrackDesign() {
     }
 }
 
-//============================================================================== Making Request
+//=================================================================== Making Request
 
 //checking if all input fields are valid to make request
 bool MusicMagicAudioProcessorEditor::check_valid_request()
@@ -272,4 +271,26 @@ void MusicMagicAudioProcessorEditor::timerCallback()
     promptBut.setVisible(false); actionBut.setVisible(false); randBut.setVisible(false);
 }
 
-//============================================================================== NEW
+//=================================================================== Drag and Drop
+
+bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray& files)
+{
+    for (auto file : files) {
+        if ( file.contains(".wav") || file.contains(".mp3") || file.contains(".aif") ) {
+            return true;
+        }
+    }
+    return false;
+};
+
+void MusicMagicAudioProcessorEditor::filesDropped (const juce::StringArray &files, int x, int y)
+{
+    for (auto file : files) {
+        if ( isInterestedInFileDrag(file) ) {
+            MusMagProcessor.loadFile(file);
+        }
+    }
+    updateInputTrackDesign();
+};
+
+//=================================================================== NEW

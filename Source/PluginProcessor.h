@@ -40,6 +40,7 @@ public:
     void playButtonClicked(); void stopButtonClicked();
     
     void loadFile();
+    void loadFile(const juce::String& path);
     int getNumSamplerSounds() { return mSampler.getNumSounds(); };
     void clearSampler();
     
