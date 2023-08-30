@@ -15,17 +15,22 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor()
                        )
 #endif
 {
+    inputSelected = true;
+    
+    //input
     mFormatManager.registerBasicFormats();
     mSampler.addVoice(new juce::SamplerVoice());
+    
+    //output
+    outputFormatManager.registerBasicFormats();
+    outputSampler.addVoice(new juce::SamplerVoice());
 }
 
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
-    mSampler.clearSounds();
-    if (mFormatReader) {
-        delete mFormatReader;
-        mFormatReader = nullptr;
-    }
+    //clearing samplers
+    clearInputSampler();
+    clearOutputSampler();
 }
 
 //============================================================================== PREDEFINED BUT HAS IMPLEMENTATION
@@ -39,46 +44,53 @@ void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         buffer.clear (i, 0, buffer.getNumSamples());
 
     //parses through midi for us
-    mSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    if (inputSelected) mSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    else outputSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{ mSampler.setCurrentPlaybackSampleRate(sampleRate); }
+{
+    if (inputSelected) mSampler.setCurrentPlaybackSampleRate(sampleRate);
+    else outputSampler.setCurrentPlaybackSampleRate(sampleRate);
+    
+}
 
-//============================================================================== CUSTOM FUNCTIONALITY
+//============================================================================== INPUT TRACK
 
-void MusicMagicAudioProcessor::loadFile()
+void MusicMagicAudioProcessor::loadInputFile()
 {
     mSampler.clearSounds();
     
     //selecting file from directory
     juce::FileChooser chooser { "Please load a file" };
+    
+    //if sound chosen
     if ( chooser.browseForFileToOpen() ) {
-        auto file = chooser.getResult();
-        mFormatReader = mFormatManager.createReaderFor(file);
+        inputTrack = chooser.getResult();
+        mFormatReader = mFormatManager.createReaderFor(inputTrack);
+        
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
     }
-
-    //adding sound to Sampler
-    juce::BigInteger range;
-    range.setRange(0, 128, true);
-    mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
 }
 
-void MusicMagicAudioProcessor::loadFile(const juce::String& path)
+void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
 {
     mSampler.clearSounds();
     
     //path retrieved by UI
-    auto file = juce::File(path);
-    mFormatReader = mFormatManager.createReaderFor(file);
-
+    inputTrack = juce::File(path);
+    mFormatReader = mFormatManager.createReaderFor(inputTrack);
+    
     //adding sound to Sampler
     juce::BigInteger range;
     range.setRange(0, 128, true);
     mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
 }
 
-void MusicMagicAudioProcessor::clearSampler()
+void MusicMagicAudioProcessor::clearInputSampler()
 {
     mSampler.clearSounds();
     if (mFormatReader) {
@@ -87,8 +99,44 @@ void MusicMagicAudioProcessor::clearSampler()
     }
 }
 
-void MusicMagicAudioProcessor::playButtonClicked() {}
-void MusicMagicAudioProcessor::stopButtonClicked() {}
+//============================================================================== INPUT TRACK
+
+void MusicMagicAudioProcessor::loadOutputFile()
+{
+    outputSampler.clearSounds();
+    
+    //selecting file from directory
+    juce::FileChooser chooser { "Please load a file" };
+    
+    //if sound chosen
+    if ( chooser.browseForFileToOpen() ) {
+        outputTrack = chooser.getResult();
+        outputFormatReader = outputFormatManager.createReaderFor(outputTrack);
+        
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        outputSampler.addSound( new juce::SamplerSound ("Sample", *outputFormatReader, range, 60, 0.1, 0.1, 10.0));
+    }
+}
+
+void MusicMagicAudioProcessor::clearOutputSampler()
+{
+    outputSampler.clearSounds();
+    if (outputFormatReader) {
+        delete outputFormatReader;
+        outputFormatReader = nullptr;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 //============================================================================== UNTOUCHED
 //==============================================================================

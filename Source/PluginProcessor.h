@@ -37,21 +37,39 @@ public:
     void releaseResources() override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     //==============================================================================
-    void playButtonClicked(); void stopButtonClicked();
+    //=============================================================================
     
-    void loadFile();
-    void loadFile(const juce::String& path);
+    bool inputSelected;
+    
+    
+    //======================================================================Input
+    juce::File inputTrack;
+    void loadInputFile();
+    void loadInputFile(const juce::String& path);
+
     int getNumSamplerSounds() { return mSampler.getNumSounds(); };
-    void clearSampler();
+    void clearInputSampler();
+    
+    //======================================================================Output
+    juce::File outputTrack;
+    void loadOutputFile();
+    int getNumOutputSounds() { return outputSampler.getNumSounds(); };
+    void clearOutputSampler();
     
 private:
-
+    
+    //======================================================================Input
     juce::Synthesiser mSampler;
     const int mNumVoices { 1 };
-
     juce::AudioFormatManager mFormatManager;
     juce::AudioFormatReader* mFormatReader { nullptr };
-
+    
+    //======================================================================Output
+    juce::Synthesiser outputSampler;
+    const int outputNumVoices { 1 };
+    juce::AudioFormatManager outputFormatManager;
+    juce::AudioFormatReader* outputFormatReader { nullptr };
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)
 };

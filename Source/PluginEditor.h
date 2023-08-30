@@ -23,11 +23,11 @@ public:
     void filesDropped (const juce::StringArray &files, int x, int y) override;
     
 private:
+    
     //input
     juce::TextButton input_load_box;
     juce::TextButton input_delete_button;
     void updateInputTrackDesign();
-    void deleteButtonClicked();
     
     //randomness
     juce::Slider RandomnessSlider;
@@ -50,20 +50,12 @@ private:
     void send_request(juce::String prompt, juce::String action, juce::String randomness);
     
     //output
-    juce::TextButton output_play_button;
+    juce::TextButton output_track_box;
+    void updateOutputTrackDesign();
     juce::TextButton output_copy_button;
-    
-    //in final \X/
-    juce::TextButton promptBut;
-    juce::TextButton randBut;
-    juce::TextButton actionBut;
+    juce::TextButton output_delete_button;
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& MusMagProcessor;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessorEditor)
 };
-
-
-//redacted:
-//juce::TextButton input_play_button;
-//juce::TextButton input_stop_button;
