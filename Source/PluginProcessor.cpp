@@ -50,9 +50,8 @@ void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    if (inputSelected) mSampler.setCurrentPlaybackSampleRate(sampleRate);
-    else outputSampler.setCurrentPlaybackSampleRate(sampleRate);
-    
+    mSampler.setCurrentPlaybackSampleRate(sampleRate);
+    outputSampler.setCurrentPlaybackSampleRate(sampleRate);
 }
 
 //============================================================================== INPUT TRACK
@@ -128,6 +127,20 @@ void MusicMagicAudioProcessor::clearOutputSampler()
         outputFormatReader = nullptr;
     }
 }
+
+//============================================================================== BLAH
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

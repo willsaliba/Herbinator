@@ -22,9 +22,11 @@ public:
     bool isInterestedInFileDrag (const juce::StringArray& files) override;
     void filesDropped (const juce::StringArray &files, int x, int y) override;
     
+    
 private:
     
     //input
+    juce::ToggleButton inputFocusButton;
     juce::TextButton input_load_box;
     juce::TextButton input_delete_button;
     void updateInputTrackDesign();
@@ -50,10 +52,14 @@ private:
     void send_request(juce::String prompt, juce::String action, juce::String randomness);
     
     //output
+    juce::ToggleButton outputFocusButton;
     juce::TextButton output_track_box;
     void updateOutputTrackDesign();
     juce::TextButton output_copy_button;
     juce::TextButton output_delete_button;
+    
+    //other general
+    void toggleIO(std::string IO);
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& MusMagProcessor;
