@@ -12,11 +12,9 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), pathToClip(""), inputSelected(true)
 #endif
 {
-    inputSelected = true;
-    
     //input
     mFormatManager.registerBasicFormats();
     mSampler.addVoice(new juce::SamplerVoice());
@@ -28,7 +26,6 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor()
 
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
-    //clearing samplers
     clearInputSampler();
     clearOutputSampler();
 }
@@ -61,7 +58,7 @@ void MusicMagicAudioProcessor::loadInputFile()
     mSampler.clearSounds();
     
     //selecting file from directory
-    juce::FileChooser chooser { "Please load a file" };
+    juce::FileChooser chooser { "Please load an Input file" };
     
     //if sound chosen
     if ( chooser.browseForFileToOpen() ) {
@@ -105,12 +102,14 @@ void MusicMagicAudioProcessor::loadOutputFile()
     outputSampler.clearSounds();
     
     //selecting file from directory
-    juce::FileChooser chooser { "Please load a file" };
+    juce::FileChooser chooser { "Please load an Output file" };
     
     //if sound chosen
     if ( chooser.browseForFileToOpen() ) {
+        
         outputTrack = chooser.getResult();
         outputFormatReader = outputFormatManager.createReaderFor(outputTrack);
+        pathToClip = outputTrack.getFullPathName();
         
         //adding sound to Sampler
         juce::BigInteger range;
@@ -121,6 +120,7 @@ void MusicMagicAudioProcessor::loadOutputFile()
 
 void MusicMagicAudioProcessor::clearOutputSampler()
 {
+    pathToClip = "";
     outputSampler.clearSounds();
     if (outputFormatReader) {
         delete outputFormatReader;
@@ -129,9 +129,6 @@ void MusicMagicAudioProcessor::clearOutputSampler()
 }
 
 //============================================================================== BLAH
-
-
-
 
 
 

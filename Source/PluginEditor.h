@@ -6,7 +6,8 @@
 
 class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                         private juce::Timer,
-                                        public juce::FileDragAndDropTarget
+                                        public juce::FileDragAndDropTarget,
+                                        public juce::DragAndDropContainer
 {
 public:
     
@@ -26,6 +27,7 @@ public:
 private:
     
     //input
+    void initialiseInputComponents();
     juce::ToggleButton inputFocusButton;
     juce::TextButton input_load_box;
     juce::TextButton input_delete_button;
@@ -52,14 +54,18 @@ private:
     void send_request(juce::String prompt, juce::String action, juce::String randomness);
     
     //output
+    void initialiseOutputComponents();
     juce::ToggleButton outputFocusButton;
     juce::TextButton output_track_box;
-    void updateOutputTrackDesign();
-    juce::TextButton output_copy_button;
+    void mouseDrag(const juce::MouseEvent& event) override;
     juce::TextButton output_delete_button;
-    
+    void updateOutputTrackDesign();
+        
     //other general
     void toggleIO(std::string IO);
+    
+    //XXX
+    juce::TextButton selectOutput;
     
     // reference provided as quick way for editor to access processor object that created it.
     MusicMagicAudioProcessor& MusMagProcessor;

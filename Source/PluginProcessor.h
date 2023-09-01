@@ -36,22 +36,25 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     void releaseResources() override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    //==============================================================================
-    //=============================================================================
+    //==============================================================================EXPER
     
+    juce::String pathToClip;
+    juce::String getPath() { return pathToClip; };
+        
+    //==============================================================================PERMA
+    
+    //IO Selection
     bool inputSelected;
     void setInput(bool isInput) { inputSelected = isInput; };
     
-    
-    //======================================================================Input
+    //Input
     juce::File inputTrack;
     void loadInputFile();
     void loadInputFile(const juce::String& path);
-
     int getNumSamplerSounds() { return mSampler.getNumSounds(); };
     void clearInputSampler();
     
-    //======================================================================Output
+    //Output
     juce::File outputTrack;
     void loadOutputFile();
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
@@ -59,13 +62,13 @@ public:
     
 private:
     
-    //======================================================================Input
+    //Input
     juce::Synthesiser mSampler;
     const int mNumVoices { 1 };
     juce::AudioFormatManager mFormatManager;
     juce::AudioFormatReader* mFormatReader { nullptr };
     
-    //======================================================================Output
+    //Output
     juce::Synthesiser outputSampler;
     const int outputNumVoices { 1 };
     juce::AudioFormatManager outputFormatManager;
