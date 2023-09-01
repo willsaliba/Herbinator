@@ -114,11 +114,11 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     myFont = myFont.boldened();
     g.setFont(myFont);
     g.setColour(juce::Colours::white);
-    g.drawFittedText("Output\nTrack", 60, 30, 65, 40, juce::Justification::left, false);
+    g.drawFittedText("Input\nTrack", 20, 30, 65, 40, juce::Justification::centred, false);
     g.drawFittedText("Action", 110, 100, 100, 50, juce::Justification::centred, false);
     g.drawFittedText("Randomiser", 355, 100, 100, 50, juce::Justification::centred, false);
     g.drawFittedText("Prompt", 25, 345, 100, 50, juce::Justification::left, false);
-    g.drawFittedText("Output\nTrack", 60, 530, 65, 40, juce::Justification::left, false);
+    g.drawFittedText("Output\nTrack", 23, 530, 65, 40, juce::Justification::centred, false);
     
 }
 
@@ -126,9 +126,10 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
 void MusicMagicAudioProcessorEditor::resized()
 {
     //input
-    inputFocusButton.setBounds(25, 20, 100, 60);
-    input_load_box.setBounds(150, 20, 260, 60);
-    input_delete_button.setBounds(435, 35, 30, 30);
+    input_load_box.setBounds(100, 20, 260, 60);
+    input_play_button.setBounds(375, 35, 30, 30);
+    input_stop_button.setBounds(410, 35, 30, 30);
+    input_delete_button.setBounds(445, 35, 30, 30);
     
     //randomness
     RandomnessSlider.setBounds(330, 150, 150, 150);
@@ -146,9 +147,10 @@ void MusicMagicAudioProcessorEditor::resized()
     generate_music_button.setBounds(125, 435, 250, 50);
     
     //output
-    outputFocusButton.setBounds(25, 520, 100, 60);
-    output_track_box.setBounds(150, 520, 260, 60);
-    output_delete_button.setBounds(435, 535, 30, 30);
+    output_track_box.setBounds(100, 520, 260, 60);
+    output_play_button.setBounds(375, 535, 30, 30);
+    output_stop_button.setBounds(410, 535, 30, 30);
+    output_delete_button.setBounds(445, 535, 30, 30);
     
     //XXX
     selectOutput.setBounds(435, 445, 30, 30);
@@ -157,10 +159,6 @@ void MusicMagicAudioProcessorEditor::resized()
 //refactoring to declutter constructor
 void MusicMagicAudioProcessorEditor::initialiseInputComponents()
 {
-    //input focus button
-    toggleIO("Input");
-    inputFocusButton.onClick = [&]() { toggleIO("Input"); };
-    addAndMakeVisible(inputFocusButton);
     
     //load input track box
     input_load_box.setButtonText("Drag and Drop Or Click To Select");
@@ -171,10 +169,29 @@ void MusicMagicAudioProcessorEditor::initialiseInputComponents()
     };
     addAndMakeVisible(input_load_box);
     
+    //input play button
+    input_play_button.setButtonText("P");
+    input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    input_play_button.onClick = [&]() {
+        MusMagProcessor.setInput(true);
+        MusMagProcessor.sendMIDInotes();
+    };
+    addAndMakeVisible(input_play_button);
+    
+    //input stop button
+    input_stop_button.setButtonText("S");
+    input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    input_stop_button.onClick = [&]() {
+        MusMagProcessor.setInput(true);
+        MusMagProcessor.sendNoSound();
+    };
+    addAndMakeVisible(input_stop_button);
+    
     //delete input button
     input_delete_button.setButtonText("X");
     input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     input_delete_button.onClick = [&]() {
+        MusMagProcessor.sendNoSound();
         MusMagProcessor.clearInputSampler();
         updateInputTrackDesign();
     };
@@ -190,19 +207,33 @@ void MusicMagicAudioProcessorEditor::initialiseOutputComponents()
     output_track_box.addMouseListener(this, false);
     addAndMakeVisible(output_track_box);
     
+    //output play button
+    output_play_button.setButtonText("P");
+    output_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    output_play_button.onClick = [&]() {
+        MusMagProcessor.setInput(false);
+        MusMagProcessor.sendMIDInotes();
+    };
+    addAndMakeVisible(output_play_button);
+    
+    //input stop button
+    output_stop_button.setButtonText("S");
+    output_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    output_stop_button.onClick = [&]() {
+        MusMagProcessor.setInput(false);
+        MusMagProcessor.sendNoSound();
+    };
+    addAndMakeVisible(output_stop_button);
+    
     //output delete button
     output_delete_button.setButtonText("X");
     output_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     output_delete_button.onClick = [&]() {
+        MusMagProcessor.sendNoSound();
         MusMagProcessor.clearOutputSampler();
         updateOutputTrackDesign();
     };
     addAndMakeVisible(output_delete_button);
-    
-    //output focus button
-    outputFocusButton.onClick = [&]() { toggleIO("Output"); };
-    addAndMakeVisible(outputFocusButton);
-    
 }
 
 //========================================================================= GENERAL
@@ -216,30 +247,21 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton)
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
 }
 
-void MusicMagicAudioProcessorEditor::toggleIO(std::string IO)
-{
-    if (IO == "Input") {
-        inputFocusButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-        outputFocusButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-        MusMagProcessor.setInput(true);
-    } else {
-        inputFocusButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-        outputFocusButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-        MusMagProcessor.setInput(false);
-    }
-}
-
 //changing appearance of input track
 void MusicMagicAudioProcessorEditor::updateInputTrackDesign()
 {
     if (MusMagProcessor.getNumSamplerSounds() == 1) {
         input_load_box.setButtonText("Track Segment Loaded");
         input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
-        input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+        input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+        input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
+        input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
     } else {
         input_load_box.setButtonText("Drag and Drop Or Click To Select");
         input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     }
 }
 
@@ -249,11 +271,15 @@ void MusicMagicAudioProcessorEditor::updateOutputTrackDesign()
     if (MusMagProcessor.getNumOutputSounds() == 1) {
         output_track_box.setButtonText("New Music Track");
         output_track_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkmagenta);
-        output_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+        output_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+        output_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
+        output_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
     } else {
         output_track_box.setButtonText("Currently No Output");
         output_track_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         output_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        output_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        output_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     }
 }
 

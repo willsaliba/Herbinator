@@ -23,14 +23,14 @@ public:
     bool isInterestedInFileDrag (const juce::StringArray& files) override;
     void filesDropped (const juce::StringArray &files, int x, int y) override;
     
-    
 private:
     
     //input
-    void initialiseInputComponents();
-    juce::ToggleButton inputFocusButton;
     juce::TextButton input_load_box;
+    juce::TextButton input_play_button;
+    juce::TextButton input_stop_button;
     juce::TextButton input_delete_button;
+    void initialiseInputComponents();
     void updateInputTrackDesign();
     
     //randomness
@@ -54,20 +54,18 @@ private:
     void send_request(juce::String prompt, juce::String action, juce::String randomness);
     
     //output
-    void initialiseOutputComponents();
-    juce::ToggleButton outputFocusButton;
     juce::TextButton output_track_box;
-    void mouseDrag(const juce::MouseEvent& event) override;
+    juce::TextButton output_play_button;
+    juce::TextButton output_stop_button;
     juce::TextButton output_delete_button;
+    void initialiseOutputComponents();
+    void mouseDrag(const juce::MouseEvent& event) override;
     void updateOutputTrackDesign();
-        
-    //other general
-    void toggleIO(std::string IO);
     
     //XXX
     juce::TextButton selectOutput;
     
-    // reference provided as quick way for editor to access processor object that created it.
+    //reference to call processor functions
     MusicMagicAudioProcessor& MusMagProcessor;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessorEditor)
 };

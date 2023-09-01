@@ -3,17 +3,12 @@
 
 //==============================================================================
 
-MusicMagicAudioProcessor::MusicMagicAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ), pathToClip(""), inputSelected(true)
-#endif
+//CONSTRUCTOR
+MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProperties()
+        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+    ),
+    inputSelected(true), pathToClip("")
 {
     //input
     mFormatManager.registerBasicFormats();
@@ -22,17 +17,20 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor()
     //output
     outputFormatManager.registerBasicFormats();
     outputSampler.addVoice(new juce::SamplerVoice());
+    
 }
 
+//DESTRUCTOR
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
     clearInputSampler();
     clearOutputSampler();
 }
 
-//============================================================================== PREDEFINED BUT HAS IMPLEMENTATION
+//================================================================= PLAYING SOUND
 
-void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+//predefined
+void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -45,11 +43,31 @@ void MusicMagicAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     else outputSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
+//predefined
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     mSampler.setCurrentPlaybackSampleRate(sampleRate);
     outputSampler.setCurrentPlaybackSampleRate(sampleRate);
 }
+
+//sends MIDI notes to play selected song
+void MusicMagicAudioProcessor::sendMIDInotes() {
+    juce::MidiBuffer midiMessages;
+        
+    midiMessages.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8)127), 0);
+    
+    juce::AudioBuffer<float> tempBuffer;
+    processBlock(tempBuffer, midiMessages);
+}
+
+void MusicMagicAudioProcessor::sendNoSound() {
+    juce::MidiBuffer midiMessages;
+//    midiMessages.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8)0), 0);
+    midiMessages.addEvent(juce::MidiMessage::noteOff(1, 60), 0);
+    juce::AudioBuffer<float> tempBuffer;
+    processBlock(tempBuffer, midiMessages);
+}
+
 
 //============================================================================== INPUT TRACK
 
@@ -95,7 +113,7 @@ void MusicMagicAudioProcessor::clearInputSampler()
     }
 }
 
-//============================================================================== INPUT TRACK
+//============================================================================== Output TRACK
 
 void MusicMagicAudioProcessor::loadOutputFile()
 {
@@ -128,20 +146,7 @@ void MusicMagicAudioProcessor::clearOutputSampler()
     }
 }
 
-//============================================================================== BLAH
-
-
-
-
-
-
-
-
-
-
-
-
-
+//============================================================================== NEW
 
 
 
@@ -188,12 +193,11 @@ bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 }
 #endif
 
-//==============================================================================
-
-// This creates new instances of the plugin
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{ return new MusicMagicAudioProcessor(); }
+{ return new MusicMagicAudioProcessor(); } //new plugin instance
 
-// This creates new instance of the editor (front end)
 juce::AudioProcessorEditor* MusicMagicAudioProcessor::createEditor()
-{ return new MusicMagicAudioProcessorEditor (*this); }
+{ return new MusicMagicAudioProcessorEditor (*this); } //new editor instance
+
+//==============================================================================
+//==============================================================================

@@ -38,14 +38,15 @@ public:
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     //==============================================================================EXPER
     
-    juce::String pathToClip;
-    juce::String getPath() { return pathToClip; };
+    
         
     //==============================================================================PERMA
     
-    //IO Selection
+    //IO selection and playing sound
     bool inputSelected;
     void setInput(bool isInput) { inputSelected = isInput; };
+    void sendMIDInotes();
+    void sendNoSound();
     
     //Input
     juce::File inputTrack;
@@ -56,9 +57,12 @@ public:
     
     //Output
     juce::File outputTrack;
+    juce::String pathToClip;
+    
     void loadOutputFile();
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
     void clearOutputSampler();
+    juce::String getPath() { return pathToClip; };
     
 private:
     
