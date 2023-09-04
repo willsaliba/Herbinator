@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//=============================================== con/de-structors + building page
+//======================================================================BUILDING PAGE
 
 //CONSTRUCTOR
 MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor& p)
@@ -20,17 +20,20 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     
     //ACTION BUTTONS
     extendButton.setButtonText("Extend");
-    extendButton.onClick = [&]() { toggleOn(extendButton); };
+    extendButton.onClick = [&]() { toggleOn(extendButton, "Extend"); };
     addAndMakeVisible(extendButton);
     fillButton.setButtonText("Fill");
-    fillButton.onClick = [&]() { toggleOn(fillButton); };
+    fillButton.onClick = [&]() { toggleOn(fillButton, "Fill"); };
     addAndMakeVisible(fillButton);
     replaceButton.setButtonText("Replace");
-    replaceButton.onClick = [&]() { toggleOn(replaceButton); };
+    replaceButton.onClick = [&]() { toggleOn(replaceButton, "Replace"); };
     addAndMakeVisible(replaceButton);
     generateButton.setButtonText("Generate");
-    generateButton.onClick = [&]() { toggleOn(generateButton); };
+    generateButton.onClick = [&]() { toggleOn(generateButton, "Generate"); };
     addAndMakeVisible(generateButton);
+    
+    input_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+    input_cover.setAlpha(0.5f);
     
     //PROMPT
     userPrompt.setMultiLine(false);
@@ -139,6 +142,7 @@ void MusicMagicAudioProcessorEditor::resized()
     fillButton.setBounds(35, 250, 100, 20);
     replaceButton.setBounds(177.5, 175, 100, 20);
     generateButton.setBounds(177.5, 250, 100, 20);
+    input_cover.setBounds(10, 10, 480, 80);
     
     //prompt
     userPrompt.setBounds(105, 355, 360, 30);
@@ -238,13 +242,23 @@ void MusicMagicAudioProcessorEditor::initialiseOutputComponents()
 
 //========================================================================= GENERAL
 //ensuring only 1 action displays on
-void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton)
+void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce::String action)
 {
     extendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     fillButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     generateButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     replaceButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
+    
+    //remove grey rect over extend & input
+    input_cover.setVisible(false);
+    
+    if (action == "Generate") {
+        addAndMakeVisible(input_cover);
+    }
+    if (action == "Fill" || action == "Replace") {
+        //draw grey rect over extend
+    }
 }
 
 //changing appearance of input track
@@ -265,7 +279,7 @@ void MusicMagicAudioProcessorEditor::updateInputTrackDesign()
     }
 }
 
-//changing appearance of out track
+//changing appearance of output track
 void MusicMagicAudioProcessorEditor::updateOutputTrackDesign()
 {
     if (MusMagProcessor.getNumOutputSounds() == 1) {
@@ -284,72 +298,48 @@ void MusicMagicAudioProcessorEditor::updateOutputTrackDesign()
 }
 
 //=================================================================== Making Request
-//checking all input fields are valid
-bool MusicMagicAudioProcessorEditor::check_valid_request()
+
+void MusicMagicAudioProcessorEditor::ui_update_invalid_request()
 {
-    //checking action
-    bool action_selected = false;
-    if (extendButton.getToggleState() || fillButton.getToggleState() ||
-        replaceButton.getToggleState() || generateButton.getToggleState() ) action_selected = true;
-    //check prompt
-    juce::String userInput = userPrompt.getText();
-    std::string promptStr = userInput.toStdString();
-    
-    //returning true if valid
-    if (promptStr != "" && action_selected) return true;
-    
-    //chaning UI if false
     generate_music_button.setButtonText("Invalid Request!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
     startTimer(2500);
-    return false;
 }
 
-//generating request
-void MusicMagicAudioProcessorEditor::generate_request()
+void MusicMagicAudioProcessorEditor::ui_update_request_sent()
 {
-    if (check_valid_request()) {
-        //converting to integer
-        juce::Value slider_value = RandomnessSlider.getValueObject();
-        double slider_double = slider_value.getValue();
-        int slider_int = static_cast<int>(slider_double);
-        juce::String randomness = juce::String(slider_int);
-        juce::String prompt = userPrompt.getText();;
-        juce::String action;
-        if (extendButton.getToggleState()) {
-            action = "Extend";
-        } else if (replaceButton.getToggleState()) {
-            action = "Replace";
-        } else if (fillButton.getToggleState()) {
-            action = "Fill";
-        } else if (generateButton.getToggleState()) {
-            action = "Generate";
-        }
-        send_request(prompt, action, randomness);
-    }
-}
-
-//sending request and updating UI elements
-void MusicMagicAudioProcessorEditor::send_request(juce::String prompt, juce::String action, juce::String randomness)
-{
-    //in final send this request to plugin processor
     generate_music_button.setButtonText("Request Sent!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::purple);
-    
-    startTimer(4000);
+    startTimer(2500);
 }
 
-//resetting elements after making request
+//resetting generate button after request finishes
 void MusicMagicAudioProcessorEditor::timerCallback()
 {
     stopTimer();
     generate_music_button.setButtonText("GENERATE MUSIC!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-    
+}
+
+void MusicMagicAudioProcessorEditor::generate_request()
+{
+    juce::String prompt = userPrompt.getText();
+    juce::String randomness = juce::String(static_cast<int>(RandomnessSlider.getValueObject().getValue()));
+    juce::String action;
+    if (extendButton.getToggleState())        action = "Extend";
+    else if (replaceButton.getToggleState())  action = "Replace";
+    else if (fillButton.getToggleState())     action = "Fill";
+    else if (generateButton.getToggleState()) action = "Generate";
+    else action = "Unselected";
+    //send request to processor & update UI
+    bool result = MusMagProcessor.process_request(prompt, action, randomness);
+    if (result) ui_update_request_sent();
+    else ui_update_invalid_request();
 }
 
 //=================================================================== Drag & Drop IO
-bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray& files)
+//checking if valid file type
+bool MusicMagicAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
 {
     for (auto file : files) {
         if ( file.contains(".wav") || file.contains(".mp3") || file.contains(".aif") ) {

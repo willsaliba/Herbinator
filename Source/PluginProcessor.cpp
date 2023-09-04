@@ -51,23 +51,22 @@ void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 }
 
 //sends MIDI notes to play selected song
-void MusicMagicAudioProcessor::sendMIDInotes() {
+void MusicMagicAudioProcessor::sendMIDInotes()
+{
     juce::MidiBuffer midiMessages;
-        
     midiMessages.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8)127), 0);
-    
     juce::AudioBuffer<float> tempBuffer;
     processBlock(tempBuffer, midiMessages);
 }
 
-void MusicMagicAudioProcessor::sendNoSound() {
+//sends 0 freq MIDI to play no sound
+void MusicMagicAudioProcessor::sendNoSound()
+{
     juce::MidiBuffer midiMessages;
-//    midiMessages.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8)0), 0);
     midiMessages.addEvent(juce::MidiMessage::noteOff(1, 60), 0);
     juce::AudioBuffer<float> tempBuffer;
     processBlock(tempBuffer, midiMessages);
 }
-
 
 //============================================================================== INPUT TRACK
 
@@ -146,30 +145,53 @@ void MusicMagicAudioProcessor::clearOutputSampler()
     }
 }
 
+//============================================================================== Making Request
+
+bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String action, juce::String random)
+{
+    //checking action selected
+    if (action == "Unselected") return false;
+    //checking if selected action has appropriate
+    bool valid = false;
+    if (action == "Generate") valid = valid_generate_request(prompt);
+    else if (action == "Replace") valid = valid_replace_request(prompt);
+    else if (action == "Fill") valid = valid_fill_request(prompt);
+    else if (action == "Extend") valid = valid_extend_request(prompt);
+    //if valid request send it to the model
+    if (valid) return send_request_to_model(prompt, action, random);
+    else return false;
+}
+
+bool MusicMagicAudioProcessor::valid_generate_request(juce::String prompt) {
+    if (prompt != "") return true;
+    return false;
+}
+
+bool MusicMagicAudioProcessor::valid_replace_request(juce::String prompt) {
+    if (prompt != "") return true; //& filepath
+    return false;
+}
+
+bool MusicMagicAudioProcessor::valid_extend_request(juce::String prompt) {
+    if (prompt != "") return true; //& filepath & time & side
+    return false;
+}
+
+bool MusicMagicAudioProcessor::valid_fill_request(juce::String prompt) {
+    if (prompt != "") return true; //& filepath & clip1 & clip2 etc
+    return false;
+}
+
+bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random)
+{
+    return true;
+}
+
 //============================================================================== NEW
 
 
 
-
-
-
 //============================================================================== UNTOUCHED
-//==============================================================================
-
-const juce::String MusicMagicAudioProcessor::getName() const
-{ return JucePlugin_Name;}
-void MusicMagicAudioProcessor::setCurrentProgram (int index)
-{ }
-const juce::String MusicMagicAudioProcessor::getProgramName (int index)
-{ return {}; }
-void MusicMagicAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{ }
-void MusicMagicAudioProcessor::releaseResources()
-{ }
-void MusicMagicAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
-{ }
-void MusicMagicAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{ }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -199,5 +221,4 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 juce::AudioProcessorEditor* MusicMagicAudioProcessor::createEditor()
 { return new MusicMagicAudioProcessorEditor (*this); } //new editor instance
 
-//==============================================================================
 //==============================================================================

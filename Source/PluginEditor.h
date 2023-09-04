@@ -41,7 +41,8 @@ private:
     juce::ToggleButton fillButton;
     juce::ToggleButton replaceButton;
     juce::ToggleButton generateButton;
-    void toggleOn(juce::ToggleButton& onButton);
+    void toggleOn(juce::ToggleButton& onButton, juce::String action);
+    juce::TextButton input_cover;
     
     //prompt
     juce::TextEditor userPrompt;
@@ -49,9 +50,9 @@ private:
     //generate button
     juce::TextButton generate_music_button;
     void timerCallback() override;
-    bool check_valid_request();
+    void ui_update_invalid_request();
+    void ui_update_request_sent();
     void generate_request();
-    void send_request(juce::String prompt, juce::String action, juce::String randomness);
     
     //output
     juce::TextButton output_track_box;

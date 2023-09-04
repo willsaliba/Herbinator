@@ -10,37 +10,34 @@ class MusicMagicAudioProcessor  : public juce::AudioProcessor
 {
 public:
     
-    //constructor & destructor
     MusicMagicAudioProcessor();
     ~MusicMagicAudioProcessor() override;
     
-    //=====================================================================PREDEFINED
+    //==============================================================PREDEFINED & EDITED
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    
+    //============================================================PREDEFINED & UNEDITED
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; };
-    const juce::String getName() const override;
+    const juce::String getName() const override { return JucePlugin_Name;};
     bool acceptsMidi() const override { return true; };
     bool producesMidi() const override { return true; };
     bool isMidiEffect() const override { return false; };
     double getTailLengthSeconds() const override { return 0.0; };
     int getNumPrograms() override { return 1; };
     int getCurrentProgram() override { return 0; };
-    //======================================================================PREDEFINED
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    #ifndef JucePlugin_PreferredChannelConfigurations
-      bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-    #endif
-    void setCurrentProgram (int index) override;
-    const juce::String getProgramName (int index) override;
-    void changeProgramName (int index, const juce::String& newName) override;
-    void getStateInformation (juce::MemoryBlock& destData) override;
-    void setStateInformation (const void* data, int sizeInBytes) override;
-    void releaseResources() override;
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    //==============================================================================EXPER
+    void setCurrentProgram (int index) override {};
+    const juce::String getProgramName (int index) override { return {}; };
+    void changeProgramName (int index, const juce::String& newName) override {};
+    void getStateInformation (juce::MemoryBlock& destData) override {};
+    void setStateInformation (const void* data, int sizeInBytes) override {};
+    void releaseResources() override {};
+#ifndef JucePlugin_PreferredChannelConfigurations
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+#endif
     
-    
-        
-    //==============================================================================PERMA
+    //==============================================================================
     
     //IO selection and playing sound
     bool inputSelected;
@@ -58,11 +55,13 @@ public:
     //Output
     juce::File outputTrack;
     juce::String pathToClip;
-    
     void loadOutputFile();
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
     void clearOutputSampler();
     juce::String getPath() { return pathToClip; };
+    
+    //making request
+    bool process_request(juce::String prompt, juce::String action, juce::String random);
     
 private:
     
@@ -77,6 +76,13 @@ private:
     const int outputNumVoices { 1 };
     juce::AudioFormatManager outputFormatManager;
     juce::AudioFormatReader* outputFormatReader { nullptr };
+    
+    //generate request functions
+    bool valid_generate_request(juce::String prompt);
+    bool valid_replace_request(juce::String prompt);
+    bool valid_extend_request(juce::String prompt);
+    bool valid_fill_request(juce::String prompt);
+    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random);
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)
