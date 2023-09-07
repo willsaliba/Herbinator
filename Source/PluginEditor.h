@@ -42,12 +42,21 @@ private:
     juce::ToggleButton replaceButton;
     juce::ToggleButton generateButton;
     void toggleOn(juce::ToggleButton& onButton, juce::String action);
+    
+    //covers
     juce::TextButton input_cover;
+    juce::TextButton extend_cover;
+    
+    //extend controls
+    juce::Slider extendSlider;
+    juce::ToggleButton leftExtendButton;
+    juce::ToggleButton rightExtendButton;
+    void toggleSide(juce::ToggleButton& onButton);
     
     //prompt
     juce::TextEditor userPrompt;
     
-    //generate button
+    //generate
     juce::TextButton generate_music_button;
     void timerCallback() override;
     void ui_update_invalid_request();

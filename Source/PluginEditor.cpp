@@ -10,14 +10,6 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     //INPUTPUT COMPONENTS
     initialiseInputComponents();
     
-    //RANDOMNESS SLIDER
-    RandomnessSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-    RandomnessSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 70, 30);
-    RandomnessSlider.setRange(0, 100);
-    RandomnessSlider.setNumDecimalPlacesToDisplay(0);
-    RandomnessSlider.setValue(50);
-    addAndMakeVisible(RandomnessSlider);
-    
     //ACTION BUTTONS
     extendButton.setButtonText("Extend");
     extendButton.onClick = [&]() { toggleOn(extendButton, "Extend"); };
@@ -32,8 +24,31 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     generateButton.onClick = [&]() { toggleOn(generateButton, "Generate"); };
     addAndMakeVisible(generateButton);
     
+    //COVERS
     input_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
     input_cover.setAlpha(0.5f);
+    extend_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+    extend_cover.setAlpha(0.5f);
+    
+    //RANDOMNESS SLIDER
+    RandomnessSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+    RandomnessSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 70, 30);
+    RandomnessSlider.setRange(0, 100);
+    RandomnessSlider.setNumDecimalPlacesToDisplay(0);
+    RandomnessSlider.setValue(50);
+    addAndMakeVisible(RandomnessSlider);
+    
+    //EXTEND CONTROLS
+    extendSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+    extendSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 50, 30);
+    extendSlider.setRange(0, 10);
+    extendSlider.setNumDecimalPlacesToDisplay(0);
+    extendSlider.setValue(5);
+    addAndMakeVisible(extendSlider);
+    leftExtendButton.onClick = [&]() { toggleSide(leftExtendButton); };
+    addAndMakeVisible(leftExtendButton);
+    rightExtendButton.onClick = [&]() { toggleSide(rightExtendButton); };
+    addAndMakeVisible(rightExtendButton);
     
     //PROMPT
     userPrompt.setMultiLine(false);
@@ -83,22 +98,28 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     
     //action square
     g.setColour(juce::Colours::black);
-    g.fillRect(10, 100, 300, 220);
+    g.fillRect(10, 100, 153, 220);
     g.setColour(juce::Colour(250, 240, 0));
-    g.drawRect(juce::Rectangle<int>(10, 100, 300, 220), 2.0f);
+    g.drawRect(juce::Rectangle<int>(10, 100, 153, 220), 2.0f);
     
     //action square buttons
     g.setColour(juce::Colour(85, 85, 85));
-    g.fillRect(25, 160, 127.5, 50);
-    g.fillRect(167.5, 160, 127.5, 50);
-    g.fillRect(25, 235, 127.5, 50);
-    g.fillRect(167.5, 235, 127.5, 50);
+    g.fillRect(20, 140, 133, 35);
+    g.fillRect(20, 185, 133, 35);
+    g.fillRect(20, 230, 133, 35);
+    g.fillRect(20, 275, 133, 35);
     
     //randomiser square
     g.setColour(juce::Colours::black);
-    g.fillRect(320, 100, 170, 220);
+    g.fillRect(173, 100, 153, 220);
     g.setColour(juce::Colour(250, 240, 0));
-    g.drawRect(juce::Rectangle<int>(320, 100, 170, 220), 2.0f);
+    g.drawRect(juce::Rectangle<int>(173, 100, 153, 220), 2.0f);
+    
+    //extend square
+    g.setColour(juce::Colours::black);
+    g.fillRect(336, 100, 153, 220);
+    g.setColour(juce::Colour(250, 240, 0));
+    g.drawRect(juce::Rectangle<int>(336, 100, 153, 220), 2.0f);
     
     //prompt square
     g.setColour(juce::Colours::black);
@@ -118,10 +139,13 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     g.setFont(myFont);
     g.setColour(juce::Colours::white);
     g.drawFittedText("Input\nTrack", 20, 30, 65, 40, juce::Justification::centred, false);
-    g.drawFittedText("Action", 110, 100, 100, 50, juce::Justification::centred, false);
-    g.drawFittedText("Randomiser", 355, 100, 100, 50, juce::Justification::centred, false);
+    g.drawFittedText("Action", 35, 95, 100, 50, juce::Justification::centred, false);
+    g.drawFittedText("Randomiser", 198, 95, 100, 50, juce::Justification::centred, false);
+    g.drawFittedText("Extend by", 363, 95, 100, 50, juce::Justification::centred, false);
     g.drawFittedText("Prompt", 25, 345, 100, 50, juce::Justification::left, false);
     g.drawFittedText("Output\nTrack", 23, 530, 65, 40, juce::Justification::centred, false);
+    g.drawFittedText("L", 340, 275, 50, 40, juce::Justification::centred, false);
+    g.drawFittedText("R", 430, 275, 50, 40, juce::Justification::centred, false);
     
 }
 
@@ -134,15 +158,23 @@ void MusicMagicAudioProcessorEditor::resized()
     input_stop_button.setBounds(410, 35, 30, 30);
     input_delete_button.setBounds(445, 35, 30, 30);
     
-    //randomness
-    RandomnessSlider.setBounds(330, 150, 150, 150);
-    
     //action buttons
-    extendButton.setBounds(35, 175, 100, 20);
-    fillButton.setBounds(35, 250, 100, 20);
-    replaceButton.setBounds(177.5, 175, 100, 20);
-    generateButton.setBounds(177.5, 250, 100, 20);
+    extendButton.setBounds(25, 148.5, 100, 20);
+    fillButton.setBounds(25, 193.5, 100, 20);
+    replaceButton.setBounds(25, 238.5, 100, 20);
+    generateButton.setBounds(25, 283.5, 100, 20);
+    
+    //covers
     input_cover.setBounds(10, 10, 480, 80);
+    extend_cover.setBounds(336, 100, 153, 220);
+    
+    //randomness
+    RandomnessSlider.setBounds(173, 150, 150, 150);
+    
+    //extend
+    extendSlider.setBounds(345, 135, 130, 130);
+    leftExtendButton.setBounds(380, 280, 30, 30);
+    rightExtendButton.setBounds(415, 280, 30, 30);
     
     //prompt
     userPrompt.setBounds(105, 355, 360, 30);
@@ -163,7 +195,6 @@ void MusicMagicAudioProcessorEditor::resized()
 //refactoring to declutter constructor
 void MusicMagicAudioProcessorEditor::initialiseInputComponents()
 {
-    
     //load input track box
     input_load_box.setButtonText("Drag and Drop Or Click To Select");
     input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
@@ -252,13 +283,20 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
     
     //remove grey rect over extend & input
     input_cover.setVisible(false);
-    
+    extend_cover.setVisible(false);
     if (action == "Generate") {
         addAndMakeVisible(input_cover);
+        addAndMakeVisible(extend_cover);
+    } else if (action == "Fill" || action == "Replace") {
+        addAndMakeVisible(extend_cover);
     }
-    if (action == "Fill" || action == "Replace") {
-        //draw grey rect over extend
-    }
+}
+
+void MusicMagicAudioProcessorEditor::toggleSide(juce::ToggleButton& onButton)
+{
+    leftExtendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    rightExtendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
 }
 
 //changing appearance of input track

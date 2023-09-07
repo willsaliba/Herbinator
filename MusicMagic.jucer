@@ -2,7 +2,8 @@
 
 <JUCERPROJECT id="I9Om3p" name="MusicMagic" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginCharacteristicsValue="pluginProducesMidiOut,pluginWantsMidiIn">
+              pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              pluginVST3Category="Fx,Generator,Sampler" defines="JUCE_MODAL_LOOPS_PERMITTED=1 ">
   <MAINGROUP id="s7cFzE" name="MusicMagic">
     <GROUP id="{CEDE6AF2-AC8A-C800-8B3D-A96B731325D9}" name="Source">
       <FILE id="zmTkQ2" name="PluginProcessor.cpp" compile="1" resource="0"
