@@ -8,7 +8,7 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProp
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
     ),
-    inputSelected(true), pathToClip("")
+    inputSelected(true), inputTrackPath(""), pathToClip("")
 {
     //input
     mFormatManager.registerBasicFormats();
@@ -80,6 +80,7 @@ void MusicMagicAudioProcessor::loadInputFile()
     //if sound chosen
     if ( chooser.browseForFileToOpen() ) {
         inputTrack = chooser.getResult();
+        inputTrackPath = inputTrack.getFullPathName();
         mFormatReader = mFormatManager.createReaderFor(inputTrack);
         
         //adding sound to Sampler
@@ -94,6 +95,7 @@ void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
     mSampler.clearSounds();
     
     //path retrieved by UI
+    inputTrackPath = path;
     inputTrack = juce::File(path);
     mFormatReader = mFormatManager.createReaderFor(inputTrack);
     
@@ -105,6 +107,7 @@ void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
 
 void MusicMagicAudioProcessor::clearInputSampler()
 {
+    inputTrackPath = "";
     mSampler.clearSounds();
     if (mFormatReader) {
         delete mFormatReader;
@@ -113,27 +116,6 @@ void MusicMagicAudioProcessor::clearInputSampler()
 }
 
 //============================================================================== Output TRACK
-
-void MusicMagicAudioProcessor::loadOutputFile()
-{
-    outputSampler.clearSounds();
-    
-    //selecting file from directory
-    juce::FileChooser chooser { "Please load an Output file" };
-    
-    //if sound chosen
-    if ( chooser.browseForFileToOpen() ) {
-        
-        outputTrack = chooser.getResult();
-        outputFormatReader = outputFormatManager.createReaderFor(outputTrack);
-        pathToClip = outputTrack.getFullPathName();
-        
-        //adding sound to Sampler
-        juce::BigInteger range;
-        range.setRange(0, 128, true);
-        outputSampler.addSound( new juce::SamplerSound ("Sample", *outputFormatReader, range, 60, 0.1, 0.1, 10.0));
-    }
-}
 
 void MusicMagicAudioProcessor::clearOutputSampler()
 {
@@ -151,20 +133,20 @@ bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String
 {
     //checking action selected
     if (action == "Unselected") return false;
-    //checking if selected action has appropriate
+    //checking if selected action has appropriate arguments
     bool valid = false;
-    if (action == "Generate") valid = valid_generate_request(prompt);
-    else if (action == "Replace") valid = valid_replace_request(prompt);
-    else if (action == "Fill") valid = valid_fill_request(prompt);
-    else if (action == "Extend") valid = valid_extend_request(prompt);
+    if (action == "Generate") {
+        if (prompt != "") valid = true;
+    } else if (action == "Replace") {
+        valid = valid_replace_request(prompt);
+    } else if (action == "Fill") {
+        valid = valid_fill_request(prompt);
+    } else if (action == "Extend") {
+        valid = valid_extend_request(prompt);
+    }
     //if valid request send it to the model
-    if (valid) return send_request_to_model(prompt, action, random);
+    if (valid) return true;
     else return false;
-}
-
-bool MusicMagicAudioProcessor::valid_generate_request(juce::String prompt) {
-    if (prompt != "") return true;
-    return false;
 }
 
 bool MusicMagicAudioProcessor::valid_replace_request(juce::String prompt) {
@@ -184,10 +166,47 @@ bool MusicMagicAudioProcessor::valid_fill_request(juce::String prompt) {
 
 bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random)
 {
-    return true;
+    //converting args to std::string
+    std::string thePrompt = prompt.toStdString();
+    std::string theAction = action.toStdString();
+    std::string theRandom = random.toStdString();
+    std::string thePath = inputTrackPath.toStdString();
+    
+    //### hardcoded filepath
+    std::string condaPythonPath = "/Users/willsaliba/opt/anaconda3/envs/riffusion/bin/python3";
+    std::string modelPath = "/Users/willsaliba/Documents/Topics/diffusion-music";
+    std::string cmd = condaPythonPath + " " + modelPath +  "/plugin_requests.py \"" + thePrompt + "\" \"" + theAction
+        + "\" " + theRandom + " \"" + thePath + "\"";
+    
+    //juce run command process
+    juce::ChildProcess childProcess;
+    if (! childProcess.start(juce::String(cmd)) ) {
+       DBG("Failed to start the process.");
+       return false;
+    }
+    
+    //capture output from model
+    juce::String result = childProcess.readAllProcessOutput();
+    result = result.removeCharacters(" \n\r");
+    DBG("---"); DBG(result); DBG("---");
+
+    //if success
+    if ( !result.isEmpty() ) {
+        outputSampler.clearSounds();
+        //processing path file
+        pathToClip = result;
+        outputTrack = juce::File(pathToClip);
+        outputFormatReader = outputFormatManager.createReaderFor(outputTrack);
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        outputSampler.addSound( new juce::SamplerSound ("Sample", *outputFormatReader, range, 60, 0.1, 0.1, 10.0));
+        return true;
+    }
+    return false;
 }
 
-//============================================================================== NEW
+
 
 
 

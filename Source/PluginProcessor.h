@@ -39,6 +39,8 @@ public:
     
     //==============================================================================
     
+    void demonstration();
+    
     //IO selection and playing sound
     bool inputSelected;
     void setInput(bool isInput) { inputSelected = isInput; };
@@ -47,6 +49,7 @@ public:
     
     //Input
     juce::File inputTrack;
+    juce::String inputTrackPath;
     void loadInputFile();
     void loadInputFile(const juce::String& path);
     int getNumSamplerSounds() { return mSampler.getNumSounds(); };
@@ -55,13 +58,13 @@ public:
     //Output
     juce::File outputTrack;
     juce::String pathToClip;
-    void loadOutputFile();
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
     void clearOutputSampler();
     juce::String getPath() { return pathToClip; };
     
     //making request
     bool process_request(juce::String prompt, juce::String action, juce::String random);
+    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random);
     
 private:
     
@@ -77,12 +80,10 @@ private:
     juce::AudioFormatManager outputFormatManager;
     juce::AudioFormatReader* outputFormatReader { nullptr };
     
-    //generate request functions
-    bool valid_generate_request(juce::String prompt);
+    //generate request functions xxx
     bool valid_replace_request(juce::String prompt);
     bool valid_extend_request(juce::String prompt);
     bool valid_fill_request(juce::String prompt);
-    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random);
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)

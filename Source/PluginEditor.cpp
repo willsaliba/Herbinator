@@ -68,15 +68,7 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
 
     //OUTPUT COMPONENTS
     initialiseOutputComponents();
-    
-    //XXX
-    selectOutput.setButtonText("S");
-    selectOutput.onClick = [&]() {
-        MusMagProcessor.loadOutputFile();
-        updateOutputTrackDesign();
-    };
-    addAndMakeVisible(selectOutput);
-        
+
     //size of window
     setSize (500, 600);
 }
@@ -187,9 +179,6 @@ void MusicMagicAudioProcessorEditor::resized()
     output_play_button.setBounds(375, 535, 30, 30);
     output_stop_button.setBounds(410, 535, 30, 30);
     output_delete_button.setBounds(445, 535, 30, 30);
-    
-    //XXX
-    selectOutput.setBounds(435, 445, 30, 30);
 }
 
 //refactoring to declutter constructor
@@ -361,6 +350,7 @@ void MusicMagicAudioProcessorEditor::timerCallback()
 
 void MusicMagicAudioProcessorEditor::generate_request()
 {
+    ui_update_request_sent();
     juce::String prompt = userPrompt.getText();
     juce::String randomness = juce::String(static_cast<int>(RandomnessSlider.getValueObject().getValue()));
     juce::String action;
@@ -370,8 +360,10 @@ void MusicMagicAudioProcessorEditor::generate_request()
     else if (generateButton.getToggleState()) action = "Generate";
     else action = "Unselected";
     //send request to processor & update UI
-    bool result = MusMagProcessor.process_request(prompt, action, randomness);
-    if (result) ui_update_request_sent();
+    if (MusMagProcessor.process_request(prompt, action, randomness)) {
+        MusMagProcessor.send_request_to_model(prompt, action, randomness);
+        updateOutputTrackDesign();
+    }
     else ui_update_invalid_request();
 }
 
