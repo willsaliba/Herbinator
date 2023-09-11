@@ -33,6 +33,9 @@ private:
     void initialiseInputComponents();
     void updateInputTrackDesign();
     
+    //infill input
+    juce::TextButton sec_input_load_box;
+    
     //randomness
     juce::Slider RandomnessSlider;
     
@@ -45,10 +48,15 @@ private:
     
     //covers
     juce::TextButton input_cover;
+    juce::TextButton randomiser_cover;
+    juce::TextButton custom_slider_cover;
     juce::TextButton extend_cover;
     
-    //extend controls
+    //cumstom controls
     juce::Slider extendSlider;
+    juce::Label customSliderLabel;
+    
+    //extend control
     juce::ToggleButton leftExtendButton;
     juce::ToggleButton rightExtendButton;
     void toggleSide(juce::ToggleButton& onButton);
@@ -71,9 +79,6 @@ private:
     void initialiseOutputComponents();
     void mouseDrag(const juce::MouseEvent& event) override;
     void updateOutputTrackDesign();
-    
-    //XXX
-    juce::TextButton selectOutput;
     
     //reference to call processor functions
     MusicMagicAudioProcessor& MusMagProcessor;

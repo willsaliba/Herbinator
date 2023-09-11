@@ -14,7 +14,7 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     extendButton.setButtonText("Extend");
     extendButton.onClick = [&]() { toggleOn(extendButton, "Extend"); };
     addAndMakeVisible(extendButton);
-    fillButton.setButtonText("Fill");
+    fillButton.setButtonText("In-Fill");
     fillButton.onClick = [&]() { toggleOn(fillButton, "Fill"); };
     addAndMakeVisible(fillButton);
     replaceButton.setButtonText("Replace");
@@ -29,6 +29,10 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     input_cover.setAlpha(0.5f);
     extend_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
     extend_cover.setAlpha(0.5f);
+    custom_slider_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+    custom_slider_cover.setAlpha(0.5f);
+    randomiser_cover.setColour(juce::TextButton::buttonColourId, juce::Colours::grey);
+    randomiser_cover.setAlpha(0.5f);
     
     //RANDOMNESS SLIDER
     RandomnessSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
@@ -38,13 +42,21 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     RandomnessSlider.setValue(50);
     addAndMakeVisible(RandomnessSlider);
     
-    //EXTEND CONTROLS
+    //CUSTOM CONTROLS
     extendSlider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-    extendSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 50, 30);
+    extendSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 40, 25);
     extendSlider.setRange(0, 10);
-    extendSlider.setNumDecimalPlacesToDisplay(0);
+    extendSlider.setNumDecimalPlacesToDisplay(1);
     extendSlider.setValue(5);
     addAndMakeVisible(extendSlider);
+    
+    juce::Font myFont(20.0f); myFont = myFont.boldened();
+    customSliderLabel.setFont(myFont);
+    customSliderLabel.setText("Extend by", juce::NotificationType::dontSendNotification);
+    customSliderLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(customSliderLabel);
+    
+    //EXTEND CONTROLS
     leftExtendButton.onClick = [&]() { toggleSide(leftExtendButton); };
     addAndMakeVisible(leftExtendButton);
     rightExtendButton.onClick = [&]() { toggleSide(rightExtendButton); };
@@ -107,11 +119,17 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     g.setColour(juce::Colour(250, 240, 0));
     g.drawRect(juce::Rectangle<int>(173, 100, 153, 220), 2.0f);
     
+    //custom square
+    g.setColour(juce::Colours::black);
+    g.fillRect(336, 100, 153, 160);
+    g.setColour(juce::Colour(250, 240, 0));
+    g.drawRect(juce::Rectangle<int>(336, 100, 153, 160), 2.0f);
+    
     //extend square
     g.setColour(juce::Colours::black);
-    g.fillRect(336, 100, 153, 220);
+    g.fillRect(336, 270, 153, 50);
     g.setColour(juce::Colour(250, 240, 0));
-    g.drawRect(juce::Rectangle<int>(336, 100, 153, 220), 2.0f);
+    g.drawRect(juce::Rectangle<int>(336, 270, 153, 50), 2.0f);
     
     //prompt square
     g.setColour(juce::Colours::black);
@@ -133,7 +151,6 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawFittedText("Input\nTrack", 20, 30, 65, 40, juce::Justification::centred, false);
     g.drawFittedText("Action", 35, 95, 100, 50, juce::Justification::centred, false);
     g.drawFittedText("Randomiser", 198, 95, 100, 50, juce::Justification::centred, false);
-    g.drawFittedText("Extend by", 363, 95, 100, 50, juce::Justification::centred, false);
     g.drawFittedText("Prompt", 25, 345, 100, 50, juce::Justification::left, false);
     g.drawFittedText("Output\nTrack", 23, 530, 65, 40, juce::Justification::centred, false);
     g.drawFittedText("L", 340, 275, 50, 40, juce::Justification::centred, false);
@@ -146,25 +163,32 @@ void MusicMagicAudioProcessorEditor::resized()
 {
     //input
     input_load_box.setBounds(100, 20, 260, 60);
+    sec_input_load_box.setBounds(240, 20, 120, 60);
     input_play_button.setBounds(375, 35, 30, 30);
     input_stop_button.setBounds(410, 35, 30, 30);
     input_delete_button.setBounds(445, 35, 30, 30);
     
-    //action buttons
-    extendButton.setBounds(25, 148.5, 100, 20);
-    fillButton.setBounds(25, 193.5, 100, 20);
-    replaceButton.setBounds(25, 238.5, 100, 20);
-    generateButton.setBounds(25, 283.5, 100, 20);
+    //action buttons    
+    generateButton.setBounds(25, 148.5, 100, 20);
+    replaceButton.setBounds(25, 193.5, 100, 20);
+    extendButton.setBounds(25, 238.5, 100, 20);
+    fillButton.setBounds(25, 283.5, 100, 20);
+
     
     //covers
     input_cover.setBounds(10, 10, 480, 80);
-    extend_cover.setBounds(336, 100, 153, 220);
+    custom_slider_cover.setBounds(336, 100, 153, 160);
+    extend_cover.setBounds(336, 270, 153, 50);
+    randomiser_cover.setBounds(173, 100, 153, 220);
     
     //randomness
     RandomnessSlider.setBounds(173, 150, 150, 150);
     
+    //custom
+    extendSlider.setBounds(345, 135, 130, 110);
+    customSliderLabel.setBounds(363, 95, 100, 50);
+    
     //extend
-    extendSlider.setBounds(345, 135, 130, 130);
     leftExtendButton.setBounds(380, 280, 30, 30);
     rightExtendButton.setBounds(415, 280, 30, 30);
     
@@ -185,13 +209,18 @@ void MusicMagicAudioProcessorEditor::resized()
 void MusicMagicAudioProcessorEditor::initialiseInputComponents()
 {
     //load input track box
-    input_load_box.setButtonText("Drag and Drop Or Click To Select");
+    input_load_box.setButtonText("Drag and Drop Or Click");
     input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
     input_load_box.onClick = [&]() {
         MusMagProcessor.loadInputFile();
         updateInputTrackDesign();
     };
     addAndMakeVisible(input_load_box);
+    
+    //second input track box for in fill
+    sec_input_load_box.setButtonText("Drag and Drop Or Click");
+    sec_input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    sec_input_load_box.onClick = [&]() { ; };
     
     //input play button
     input_play_button.setButtonText("P");
@@ -270,14 +299,31 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
     replaceButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
     
-    //remove grey rect over extend & input
+    //resetting everything
     input_cover.setVisible(false);
+    custom_slider_cover.setVisible(false);
     extend_cover.setVisible(false);
+    randomiser_cover.setVisible(false);
+    sec_input_load_box.setVisible(false);
+    input_load_box.setBounds(100, 20, 260, 60);
+    input_load_box.setButtonText("Drag and Drop Or Click");
+    
     if (action == "Generate") {
         addAndMakeVisible(input_cover);
+        addAndMakeVisible(custom_slider_cover);
         addAndMakeVisible(extend_cover);
-    } else if (action == "Fill" || action == "Replace") {
+    } else if (action == "Fill") {
+        customSliderLabel.setText("Gap Length", juce::NotificationType::dontSendNotification);
         addAndMakeVisible(extend_cover);
+        addAndMakeVisible(randomiser_cover);
+        input_load_box.setBounds(100, 20, 120, 60);
+        addAndMakeVisible(sec_input_load_box);
+    } else if (action == "Replace") {
+        addAndMakeVisible(extend_cover);
+        addAndMakeVisible(custom_slider_cover);
+    } else {
+        addAndMakeVisible(randomiser_cover);
+        customSliderLabel.setText("Extend by", juce::NotificationType::dontSendNotification);
     }
 }
 

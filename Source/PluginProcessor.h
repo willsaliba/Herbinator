@@ -81,9 +81,8 @@ private:
     juce::AudioFormatReader* outputFormatReader { nullptr };
     
     //generate request functions xxx
-    bool valid_replace_request(juce::String prompt);
-    bool valid_extend_request(juce::String prompt);
-    bool valid_fill_request(juce::String prompt);
+    bool valid_extend_request(juce::String prompt) {return false;}; //prmp, path, side
+    bool valid_fill_request(juce::String prompt) {return false;};
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)

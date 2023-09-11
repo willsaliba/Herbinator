@@ -138,7 +138,7 @@ bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String
     if (action == "Generate") {
         if (prompt != "") valid = true;
     } else if (action == "Replace") {
-        valid = valid_replace_request(prompt);
+        if (prompt != "" && inputTrackPath != "") valid = true;
     } else if (action == "Fill") {
         valid = valid_fill_request(prompt);
     } else if (action == "Extend") {
@@ -147,21 +147,6 @@ bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String
     //if valid request send it to the model
     if (valid) return true;
     else return false;
-}
-
-bool MusicMagicAudioProcessor::valid_replace_request(juce::String prompt) {
-    if (prompt != "") return true; //& filepath
-    return false;
-}
-
-bool MusicMagicAudioProcessor::valid_extend_request(juce::String prompt) {
-    if (prompt != "") return true; //& filepath & time & side
-    return false;
-}
-
-bool MusicMagicAudioProcessor::valid_fill_request(juce::String prompt) {
-    if (prompt != "") return true; //& filepath & clip1 & clip2 etc
-    return false;
 }
 
 bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random)
