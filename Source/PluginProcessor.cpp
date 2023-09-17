@@ -7,7 +7,7 @@
 MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProperties()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-    ), trackPlaying("in1"), inputTrackPath("null"), secondInputTrackPath("null"), pathToClip("")
+    )
 {
     //input1
     firstFormatManager.registerBasicFormats();
@@ -39,7 +39,12 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-    //parses through midi for us
+    
+    /*
+     
+     */
+    
+    //selecting which track to play
     if (trackPlaying == "in1") {
         firstSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     } else if (trackPlaying == "in2") {
@@ -88,6 +93,9 @@ void MusicMagicAudioProcessor::loadInputFile()
         inputTrack = chooser.getResult();
         inputTrackPath = inputTrack.getFullPathName();
         firstFormatReader = firstFormatManager.createReaderFor(inputTrack);
+        //draw waveform
+        firstWaveForm.setSize(1, static_cast<int>(firstFormatReader->lengthInSamples));
+        firstFormatReader->read(&firstWaveForm, 0, static_cast<int>(firstFormatReader->lengthInSamples), 0, true, false);
         //adding sound to Sampler
         juce::BigInteger range;
         range.setRange(0, 128, true);
@@ -103,6 +111,9 @@ void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
         inputTrackPath = path;
         inputTrack = juce::File(path);
         firstFormatReader = firstFormatManager.createReaderFor(inputTrack);
+        //draw waveform
+        firstWaveForm.setSize(1, static_cast<int>(firstFormatReader->lengthInSamples));
+        firstFormatReader->read(&firstWaveForm, 0, static_cast<int>(firstFormatReader->lengthInSamples), 0, true, false);
         //adding sound to Sampler
         juce::BigInteger range;
         range.setRange(0, 128, true);
@@ -113,6 +124,9 @@ void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
         secondInputTrackPath = path;
         secondInputTrack = juce::File(path);
         secondFormatReader = secondFormatManager.createReaderFor(secondInputTrack);
+        //draw waveform
+        secWaveForm.setSize(1, static_cast<int>(secondFormatReader->lengthInSamples));
+        secondFormatReader->read(&secWaveForm, 0, static_cast<int>(secondFormatReader->lengthInSamples), 0, true, false);
         //adding sound to Sampler
         juce::BigInteger range;
         range.setRange(0, 128, true);
@@ -141,6 +155,9 @@ void MusicMagicAudioProcessor::loadSecondFile()
         secondInputTrack = chooser.getResult();
         secondInputTrackPath = secondInputTrack.getFullPathName();
         secondFormatReader = secondFormatManager.createReaderFor(secondInputTrack);
+        //draw waveform
+        secWaveForm.setSize(1, static_cast<int>(secondFormatReader->lengthInSamples));
+        secondFormatReader->read(&secWaveForm, 0, static_cast<int>(secondFormatReader->lengthInSamples), 0, true, false);
         //adding sound to Sampler
         juce::BigInteger range;
         range.setRange(0, 128, true);

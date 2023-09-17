@@ -30,13 +30,15 @@ private:
     juce::TextButton input_delete_button;
     void initialiseInputComponents();
     void updateInputTrackDesign();
+    std::vector<float> firstAudioPoints;
     //second input
-    bool infillMode;
+    bool infillMode {false};
     juce::TextButton sec_input_load_box;
     juce::TextButton sec_input_play_button;
     juce::TextButton sec_input_stop_button;
     juce::TextButton sec_input_delete_button;
     void updateSecInputTrackDesign();
+    std::vector<float> secAudioPoints;
     
     //input1 precise segment selection
     juce::Slider firstStart;
@@ -59,6 +61,7 @@ private:
     juce::ToggleButton replaceButton;
     juce::ToggleButton generateButton;
     void toggleOn(juce::ToggleButton& onButton, juce::String action);
+    void resetEverything();
     
     //cumstom controls
     juce::Slider extendSlider;

@@ -39,29 +39,31 @@ public:
     //==============================================================================
     
     //playing the correct track
-    juce::String trackPlaying;
+    juce::String trackPlaying {"in1"};
     void setTrackPlaying(juce::String track) { trackPlaying = track; };
     void sendMIDInotes();
     void sendNoSound();
     
     //first input track
     juce::File inputTrack;
-    juce::String inputTrackPath;
+    juce::String inputTrackPath {"null"};
     void loadInputFile();
     void clearInputSampler();
     int getNumSamplerSounds() { return firstSampler.getNumSounds(); };
     void loadInputFile(const juce::String& path);
+    juce::AudioBuffer<float>& getFirstWaveForm() { return firstWaveForm;};
     
     //second input track
     juce::File secondInputTrack;
-    juce::String secondInputTrackPath;
+    juce::String secondInputTrackPath {"null"};
     void loadSecondFile();
     void clearSecondSampler();
     int getSecondNumSounds() { return secondSampler.getNumSounds(); };
+    juce::AudioBuffer<float>& getSecondWaveForm() { return secWaveForm;};
     
     //output track
     juce::File outputTrack;
-    juce::String pathToClip;
+    juce::String pathToClip {"null"};
     juce::String getPath() { return pathToClip; };
     void clearOutputSampler();
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
@@ -73,19 +75,18 @@ public:
 private:
     //Playing First Input Track
     juce::Synthesiser firstSampler;
-    const int firstNumVoices { 1 };
     juce::AudioFormatManager firstFormatManager;
     juce::AudioFormatReader* firstFormatReader { nullptr };
+    juce::AudioBuffer<float> firstWaveForm;
     
     //Playing Second Input Track
     juce::Synthesiser secondSampler;
-    const int secondNumVoices { 1 };
     juce::AudioFormatManager secondFormatManager;
     juce::AudioFormatReader* secondFormatReader { nullptr };
+    juce::AudioBuffer<float> secWaveForm;
     
     //Playing Output Track
     juce::Synthesiser outputSampler;
-    const int outputNumVoices { 1 };
     juce::AudioFormatManager outputFormatManager;
     juce::AudioFormatReader* outputFormatReader { nullptr };
     

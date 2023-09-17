@@ -113,6 +113,54 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
         g.drawRect(juce::Rectangle<int>(10, 10, 480, 80), 2.0f);
     }
     
+    //drawing first input track
+    if (MusMagProcessor.getNumSamplerSounds() == 1) {
+        //setting it up
+        float width = infillMode ? 180.0f : 260.0f;
+        g.setColour(juce::Colours::darkgrey);
+        g.fillRect(100, 22.5, static_cast<int>(width), 55);
+        g.setColour(juce::Colour(25, 160, 250));
+        juce::Path p;
+        firstAudioPoints.clear();
+        //getting info from audio file
+        auto waveform = MusMagProcessor.getFirstWaveForm();
+        auto ratio = static_cast<int>(round(static_cast<float>(waveform.getNumSamples()) / width));
+        auto buffer = waveform.getReadPointer(0);
+        for (int sample = 0; sample < waveform.getNumSamples(); sample += ratio) {
+            firstAudioPoints.push_back(buffer[sample]);
+        }
+        p.startNewSubPath(100, (55/2) + 22.5); //starting X axius
+
+        for (int sample = 0; sample < firstAudioPoints.size(); ++sample) {
+            auto point = juce::jmap<float>(firstAudioPoints[sample], -1.0f, 1.0f, 55, 0);
+            p.lineTo(sample + 100, point + 22.5); //adjusted x and y coordinates
+        }
+        g.strokePath(p, juce::PathStrokeType(2));
+    }
+    //drawing second input track
+    if (infillMode && MusMagProcessor.getSecondNumSounds() == 1) {
+        //setting it up
+        g.setColour(juce::Colours::darkgrey);
+        g.fillRect(295, 22.5, 180, 55);
+        g.setColour(juce::Colour(25, 160, 250));
+        juce::Path p;
+        secAudioPoints.clear();
+        //getting info from audio file
+        auto waveform = MusMagProcessor.getSecondWaveForm();
+        auto ratio = static_cast<int>(round(static_cast<float>(waveform.getNumSamples()) / 180.0f));
+        auto buffer = waveform.getReadPointer(0);
+        for (int sample = 0; sample < waveform.getNumSamples(); sample += ratio) {
+            secAudioPoints.push_back(buffer[sample]);
+        }
+        p.startNewSubPath(295, (55/2) + 22.5); //starting X axius
+
+        for (int sample = 0; sample < secAudioPoints.size(); ++sample) {
+            auto point = juce::jmap<float>(secAudioPoints[sample], -1.0f, 1.0f, 55, 0);
+            p.lineTo(sample + 295, point + 22.5); //adjusted x and y coordinates
+        }
+        g.strokePath(p, juce::PathStrokeType(2));
+    }
+    
     //action square
     g.setColour(juce::Colours::black);
     g.fillRect(10, 140, 153, 220);
@@ -373,44 +421,11 @@ void MusicMagicAudioProcessorEditor::initialiseOutputComponents()
 //ensuring only 1 action displays on
 void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce::String action)
 {
-    extendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-    fillButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-    generateButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-    replaceButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    resetEverything();
+    
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
     
-    //resetting everything
-    input_cover.setVisible(false);
-    custom_slider_cover.setVisible(false);
-    extend_cover.setVisible(false);
-    randomiser_cover.setVisible(false);
-    
-    infillMode = false;
-    
-    //resizing input componenents
-    input_load_box.setBounds(100, 20, 260, 60);
-    input_play_button.setBounds(375, 35, 30, 30);
-    input_stop_button.setBounds(410, 35, 30, 30);
-    input_delete_button.setBounds(445, 35, 30, 30);
-    firstStart.setBounds(95, 10, 270, 20);
-    firstStart.setValue(0.0);
-    firstStartCover.setVisible(false);
-    firstEnd.setBounds(95, 70, 270, 20);
-    firstEnd.setValue(100.0);
-    firstEndCover.setVisible(false);
-    
-    //making second input componenents invisible/reset
-    sec_input_load_box.setVisible(false);
-    sec_input_play_button.setVisible(false);
-    sec_input_stop_button.setVisible(false);
-    sec_input_delete_button.setVisible(false);
-    secStart.setVisible(false);
-    secEnd.setVisible(false);
-    secStartCover.setVisible(false);
-    secEndCover.setVisible(false);
-    secStart.setValue(0.0);
-    secEnd.setValue(100.0);
-    
+    //specific controls
     if (action == "Generate") {
         addAndMakeVisible(input_cover);
         addAndMakeVisible(custom_slider_cover);
@@ -425,25 +440,63 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
         input_play_button.setBounds(140, 90, 30, 30);
         input_stop_button.setBounds(175, 90, 30, 30);
         input_delete_button.setBounds(210, 90, 30, 30);
-        //first segment percision
         firstStart.setBounds(95, 10, 190, 20);
         firstEnd.setBounds(95, 70, 190, 20);
         //second track
+        secStart.setValue(0.0);
+        secEnd.setValue(100.0);
         addAndMakeVisible(secStart);
         addAndMakeVisible(secEnd);
-        addAndMakeVisible(sec_input_load_box);
         addAndMakeVisible(sec_input_play_button);
         addAndMakeVisible(sec_input_stop_button);
         addAndMakeVisible(sec_input_delete_button);
-        
+        //colour & button existance updates
+        updateInputTrackDesign();
+        updateSecInputTrackDesign();
     } else if (action == "Replace") {
         addAndMakeVisible(extend_cover);
         addAndMakeVisible(custom_slider_cover);
     } else {
         addAndMakeVisible(randomiser_cover);
         customSliderLabel.setText("Extend by", juce::NotificationType::dontSendNotification);
+        secStartCover.setVisible(false);
+        secEndCover.setVisible(false);
     }
     repaint();
+}
+
+void MusicMagicAudioProcessorEditor::resetEverything() {
+    //reseting buttons
+    extendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    fillButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    generateButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    replaceButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+    //reset covers
+    input_cover.setVisible(false);
+    custom_slider_cover.setVisible(false);
+    extend_cover.setVisible(false);
+    randomiser_cover.setVisible(false);
+    infillMode = false;
+    firstStartCover.setVisible(false);
+    firstEndCover.setVisible(false);
+    //resizing input componenents
+    input_load_box.setBounds(100, 20, 260, 60);
+    input_play_button.setBounds(375, 35, 30, 30);
+    input_stop_button.setBounds(410, 35, 30, 30);
+    input_delete_button.setBounds(445, 35, 30, 30);
+    firstStart.setBounds(95, 10, 270, 20);
+    firstEnd.setBounds(95, 70, 270, 20);
+    firstStart.setValue(0.0);
+    firstEnd.setValue(100.0);
+    //making second input components invisible
+    sec_input_load_box.setVisible(false);
+    sec_input_play_button.setVisible(false);
+    sec_input_stop_button.setVisible(false);
+    sec_input_delete_button.setVisible(false);
+    secStart.setVisible(false);
+    secEnd.setVisible(false);
+    secStartCover.setVisible(false);
+    secEndCover.setVisible(false);
 }
 
 void MusicMagicAudioProcessorEditor::toggleSide(juce::ToggleButton& onButton, juce::String sideSelected)
@@ -458,43 +511,45 @@ void MusicMagicAudioProcessorEditor::toggleSide(juce::ToggleButton& onButton, ju
 void MusicMagicAudioProcessorEditor::updateInputTrackDesign()
 {
     if (MusMagProcessor.getNumSamplerSounds() == 1) {
-        input_load_box.setButtonText("Track Segment Loaded");
-        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
+        input_load_box.setVisible(false);
         input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
         input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
         input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
         firstStart.setEnabled(true);
         firstEnd.setEnabled(true);
     } else {
-        input_load_box.setButtonText("Drag and Drop Or Click");
-        input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        input_load_box.setVisible(true);
         input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         firstStart.setEnabled(false);
         firstEnd.setEnabled(false);
     }
+    firstStart.setValue(0.0);
+    firstEnd.setValue(100.0);
+    repaint();
 }
 
 void MusicMagicAudioProcessorEditor::updateSecInputTrackDesign()
 {
     if (MusMagProcessor.getSecondNumSounds() == 1) {
-        sec_input_load_box.setButtonText("Track Segment Loaded");
-        sec_input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colour(0, 100, 200));
+        sec_input_load_box.setVisible(false);
         sec_input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
         sec_input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
         sec_input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
         secStart.setEnabled(true);
         secEnd.setEnabled(true);
-    } else {
-        sec_input_load_box.setButtonText("Drag and Drop Or Click");
-        sec_input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+    } else if (infillMode) {
+        addAndMakeVisible(sec_input_load_box);
         sec_input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         sec_input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         sec_input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         secStart.setEnabled(false);
         secEnd.setEnabled(false);
     }
+    secStart.setValue(0.0);
+    secEnd.setValue(100.0);
+    repaint();
 }
 
 //changing appearance of output track
@@ -648,6 +703,8 @@ void MusicMagicAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     }
     addAndMakeVisible(firstStartCover);
     addAndMakeVisible(firstEndCover);
-    addAndMakeVisible(secStartCover);
-    addAndMakeVisible(secEndCover);
+    if (infillMode) {
+        addAndMakeVisible(secStartCover);
+        addAndMakeVisible(secEndCover);
+    }
 }
