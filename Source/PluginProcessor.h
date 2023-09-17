@@ -5,6 +5,7 @@
 
 class MusicMagicAudioProcessor  : public juce::AudioProcessor
                                 #if JucePlugin_Enable_ARA
+                                    DBG("true dude")
                                  , public juce::AudioProcessorARAExtension
                                 #endif
 {
@@ -13,7 +14,6 @@ public:
     MusicMagicAudioProcessor();
     ~MusicMagicAudioProcessor() override;
     
-    //==============================================================PREDEFINED & EDITED
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     
@@ -36,53 +36,58 @@ public:
 #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 #endif
-    
     //==============================================================================
     
-    void demonstration();
-    
-    //IO selection and playing sound
-    bool inputSelected;
-    void setInput(bool isInput) { inputSelected = isInput; };
+    //playing the correct track
+    juce::String trackPlaying;
+    void setTrackPlaying(juce::String track) { trackPlaying = track; };
     void sendMIDInotes();
     void sendNoSound();
     
-    //Input
+    //first input track
     juce::File inputTrack;
     juce::String inputTrackPath;
     void loadInputFile();
-    void loadInputFile(const juce::String& path);
-    int getNumSamplerSounds() { return mSampler.getNumSounds(); };
     void clearInputSampler();
+    int getNumSamplerSounds() { return firstSampler.getNumSounds(); };
+    void loadInputFile(const juce::String& path);
     
-    //Output
+    //second input track
+    juce::File secondInputTrack;
+    juce::String secondInputTrackPath;
+    void loadSecondFile();
+    void clearSecondSampler();
+    int getSecondNumSounds() { return secondSampler.getNumSounds(); };
+    
+    //output track
     juce::File outputTrack;
     juce::String pathToClip;
-    int getNumOutputSounds() { return outputSampler.getNumSounds(); };
-    void clearOutputSampler();
     juce::String getPath() { return pathToClip; };
+    void clearOutputSampler();
+    int getNumOutputSounds() { return outputSampler.getNumSounds(); };
     
     //making request
-    bool process_request(juce::String prompt, juce::String action, juce::String random);
-    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random);
+    bool process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side);
+    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side);
     
 private:
+    //Playing First Input Track
+    juce::Synthesiser firstSampler;
+    const int firstNumVoices { 1 };
+    juce::AudioFormatManager firstFormatManager;
+    juce::AudioFormatReader* firstFormatReader { nullptr };
     
-    //Input
-    juce::Synthesiser mSampler;
-    const int mNumVoices { 1 };
-    juce::AudioFormatManager mFormatManager;
-    juce::AudioFormatReader* mFormatReader { nullptr };
+    //Playing Second Input Track
+    juce::Synthesiser secondSampler;
+    const int secondNumVoices { 1 };
+    juce::AudioFormatManager secondFormatManager;
+    juce::AudioFormatReader* secondFormatReader { nullptr };
     
-    //Output
+    //Playing Output Track
     juce::Synthesiser outputSampler;
     const int outputNumVoices { 1 };
     juce::AudioFormatManager outputFormatManager;
     juce::AudioFormatReader* outputFormatReader { nullptr };
-    
-    //generate request functions xxx
-    bool valid_extend_request(juce::String prompt) {return false;}; //prmp, path, side
-    bool valid_fill_request(juce::String prompt) {return false;};
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)

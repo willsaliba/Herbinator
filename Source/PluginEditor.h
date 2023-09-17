@@ -1,5 +1,4 @@
 /* JUCE Plugin Editor --- FRONT END --- */
-
 #pragma once
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
@@ -10,7 +9,6 @@ class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                         public juce::DragAndDropContainer
 {
 public:
-    
     //constructor & destructor
     MusicMagicAudioProcessorEditor (MusicMagicAudioProcessor&);
     ~MusicMagicAudioProcessorEditor() override;
@@ -24,7 +22,6 @@ public:
     void filesDropped (const juce::StringArray &files, int x, int y) override;
     
 private:
-    
     //input
     juce::TextButton input_load_box;
     juce::TextButton input_play_button;
@@ -33,8 +30,13 @@ private:
     void initialiseInputComponents();
     void updateInputTrackDesign();
     
-    //infill input
+    //second input
+    bool infillMode;
     juce::TextButton sec_input_load_box;
+    juce::TextButton sec_input_play_button;
+    juce::TextButton sec_input_stop_button;
+    juce::TextButton sec_input_delete_button;
+    void updateSecInputTrackDesign();
     
     //randomness
     juce::Slider RandomnessSlider;
@@ -46,12 +48,6 @@ private:
     juce::ToggleButton generateButton;
     void toggleOn(juce::ToggleButton& onButton, juce::String action);
     
-    //covers
-    juce::TextButton input_cover;
-    juce::TextButton randomiser_cover;
-    juce::TextButton custom_slider_cover;
-    juce::TextButton extend_cover;
-    
     //cumstom controls
     juce::Slider extendSlider;
     juce::Label customSliderLabel;
@@ -59,16 +55,19 @@ private:
     //extend control
     juce::ToggleButton leftExtendButton;
     juce::ToggleButton rightExtendButton;
-    void toggleSide(juce::ToggleButton& onButton);
+    void toggleSide(juce::ToggleButton& onButton, juce::String sideSelected);
+    juce::String side;
     
     //prompt
     juce::TextEditor userPrompt;
     
     //generate
     juce::TextButton generate_music_button;
+    bool sendingRequest;
     void timerCallback() override;
-    void ui_update_invalid_request();
+    void ui_red_update(juce::String msg);
     void ui_update_request_sent();
+    void ui_request_success();
     void generate_request();
     
     //output
@@ -79,6 +78,12 @@ private:
     void initialiseOutputComponents();
     void mouseDrag(const juce::MouseEvent& event) override;
     void updateOutputTrackDesign();
+    
+    //covers
+    juce::TextButton input_cover;
+    juce::TextButton randomiser_cover;
+    juce::TextButton custom_slider_cover;
+    juce::TextButton extend_cover;
     
     //reference to call processor functions
     MusicMagicAudioProcessor& MusMagProcessor;

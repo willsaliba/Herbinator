@@ -7,23 +7,24 @@
 MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProperties()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-    ),
-    inputSelected(true), inputTrackPath(""), pathToClip("")
+    ), trackPlaying("in1"), inputTrackPath("null"), secondInputTrackPath("null"), pathToClip("")
 {
-    //input
-    mFormatManager.registerBasicFormats();
-    mSampler.addVoice(new juce::SamplerVoice());
-    
+    //input1
+    firstFormatManager.registerBasicFormats();
+    firstSampler.addVoice(new juce::SamplerVoice());
+    //input2
+    secondFormatManager.registerBasicFormats();
+    secondSampler.addVoice(new juce::SamplerVoice());
     //output
     outputFormatManager.registerBasicFormats();
     outputSampler.addVoice(new juce::SamplerVoice());
-    
 }
 
 //DESTRUCTOR
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
     clearInputSampler();
+    clearSecondSampler();
     clearOutputSampler();
 }
 
@@ -32,21 +33,27 @@ MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 //predefined
 void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    //clear any other sounds playing
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
     //parses through midi for us
-    if (inputSelected) mSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-    else outputSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    if (trackPlaying == "in1") {
+        firstSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    } else if (trackPlaying == "in2") {
+        secondSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    } else {
+        outputSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 }
 
 //predefined
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    mSampler.setCurrentPlaybackSampleRate(sampleRate);
+    firstSampler.setCurrentPlaybackSampleRate(sampleRate);
+    secondSampler.setCurrentPlaybackSampleRate(sampleRate);
     outputSampler.setCurrentPlaybackSampleRate(sampleRate);
 }
 
@@ -68,54 +75,88 @@ void MusicMagicAudioProcessor::sendNoSound()
     processBlock(tempBuffer, midiMessages);
 }
 
-//============================================================================== INPUT TRACK
+// MANAGING TRACKS ==============================================================================
 
 void MusicMagicAudioProcessor::loadInputFile()
 {
-    mSampler.clearSounds();
-    
+    firstSampler.clearSounds();
     //selecting file from directory
-    juce::FileChooser chooser { "Please load an Input file" };
-    
+    juce::FileChooser chooser { "Please Load a First Input File" };
     //if sound chosen
     if ( chooser.browseForFileToOpen() ) {
+        //adding file
         inputTrack = chooser.getResult();
         inputTrackPath = inputTrack.getFullPathName();
-        mFormatReader = mFormatManager.createReaderFor(inputTrack);
-        
+        firstFormatReader = firstFormatManager.createReaderFor(inputTrack);
         //adding sound to Sampler
         juce::BigInteger range;
         range.setRange(0, 128, true);
-        mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
+        firstSampler.addSound( new juce::SamplerSound ("Sample", *firstFormatReader, range, 60, 0.1, 0.1, 10.0));
     }
 }
 
 void MusicMagicAudioProcessor::loadInputFile(const juce::String& path)
 {
-    mSampler.clearSounds();
-    
-    //path retrieved by UI
-    inputTrackPath = path;
-    inputTrack = juce::File(path);
-    mFormatReader = mFormatManager.createReaderFor(inputTrack);
-    
-    //adding sound to Sampler
-    juce::BigInteger range;
-    range.setRange(0, 128, true);
-    mSampler.addSound( new juce::SamplerSound ("Sample", *mFormatReader, range, 60, 0.1, 0.1, 10.0));
+    if (inputTrackPath == "null") {
+        firstSampler.clearSounds();
+        //adding file using path retrieved by UI
+        inputTrackPath = path;
+        inputTrack = juce::File(path);
+        firstFormatReader = firstFormatManager.createReaderFor(inputTrack);
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        firstSampler.addSound( new juce::SamplerSound ("Sample", *firstFormatReader, range, 60, 0.1, 0.1, 10.0));
+    } else if (inputTrackPath != "null" && secondInputTrackPath == "null") {
+        secondSampler.clearSounds();
+        //adding file using path retrieved by UI
+        secondInputTrackPath = path;
+        secondInputTrack = juce::File(path);
+        secondFormatReader = secondFormatManager.createReaderFor(secondInputTrack);
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        secondSampler.addSound( new juce::SamplerSound ("Sample", *secondFormatReader, range, 60, 0.1, 0.1, 10.0));
+    }
 }
 
 void MusicMagicAudioProcessor::clearInputSampler()
 {
-    inputTrackPath = "";
-    mSampler.clearSounds();
-    if (mFormatReader) {
-        delete mFormatReader;
-        mFormatReader = nullptr;
+    inputTrackPath = "null";
+    firstSampler.clearSounds();
+    if (firstFormatReader) {
+        delete firstFormatReader;
+        firstFormatReader = nullptr;
     }
 }
 
-//============================================================================== Output TRACK
+void MusicMagicAudioProcessor::loadSecondFile()
+{
+    secondSampler.clearSounds();
+    //selecting file from directory
+    juce::FileChooser chooser { "Please Load a Second Input File" };
+    //if sound chosen
+    if ( chooser.browseForFileToOpen() ) {
+        //adding file
+        secondInputTrack = chooser.getResult();
+        secondInputTrackPath = secondInputTrack.getFullPathName();
+        secondFormatReader = secondFormatManager.createReaderFor(secondInputTrack);
+        //adding sound to Sampler
+        juce::BigInteger range;
+        range.setRange(0, 128, true);
+        secondSampler.addSound( new juce::SamplerSound ("Sample", *secondFormatReader, range, 60, 0.1, 0.1, 10.0));
+    }
+}
+
+void MusicMagicAudioProcessor::clearSecondSampler()
+{
+    secondInputTrackPath = "null";
+    secondSampler.clearSounds();
+    if (secondFormatReader) {
+        delete secondFormatReader;
+        secondFormatReader = nullptr;
+    }
+}
 
 void MusicMagicAudioProcessor::clearOutputSampler()
 {
@@ -127,59 +168,56 @@ void MusicMagicAudioProcessor::clearOutputSampler()
     }
 }
 
-//============================================================================== Making Request
+// MANAGING REQUESTS ==============================================================================
 
-bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String action, juce::String random)
+bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side)
 {
     //checking action selected
     if (action == "Unselected") return false;
     //checking if selected action has appropriate arguments
-    bool valid = false;
     if (action == "Generate") {
-        if (prompt != "") valid = true;
+        if (prompt != "") return true;
     } else if (action == "Replace") {
-        if (prompt != "" && inputTrackPath != "") valid = true;
-    } else if (action == "Fill") {
-        valid = valid_fill_request(prompt);
+        if (prompt != "" && inputTrackPath != "null") return true;
     } else if (action == "Extend") {
-        valid = valid_extend_request(prompt);
+        if (prompt != "" && inputTrackPath != "null" && side != "null") return true;
+    } else if (action == "Fill") {
+        if (prompt != "" && inputTrackPath != "null" && secondInputTrackPath != "null") return true;
     }
     //if valid request send it to the model
-    if (valid) return true;
-    else return false;
+    return false;
 }
 
-bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random)
+bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side)
 {
     //converting args to std::string
     std::string thePrompt = prompt.toStdString();
     std::string theAction = action.toStdString();
     std::string theRandom = random.toStdString();
     std::string thePath = inputTrackPath.toStdString();
-    
+    std::string theSecondPath = secondInputTrackPath.toStdString();
+    std::string theTime = time.toStdString();
+    std::string theSide = side.toStdString();
     //### hardcoded filepath
     std::string condaPythonPath = "/Users/willsaliba/opt/anaconda3/envs/riffusion/bin/python3";
     std::string modelPath = "/Users/willsaliba/Documents/Topics/diffusion-music";
-    std::string cmd = condaPythonPath + " " + modelPath +  "/plugin_requests.py \"" + thePrompt + "\" \"" + theAction
-        + "\" " + theRandom + " \"" + thePath + "\"";
-    
+    std::string cmd = condaPythonPath + " " + modelPath +  "/plugin_requests.py \"" + thePrompt + "\" \"" + theAction + "\" \"" + theRandom + "\" \"" + thePath + "\" \"" + theSecondPath + "\" \"" + theTime + "\" \"" + theSide + "\"";
+    DBG("the command"); DBG(cmd);
     //juce run command process
     juce::ChildProcess childProcess;
     if (! childProcess.start(juce::String(cmd)) ) {
        DBG("Failed to start the process.");
        return false;
     }
-    
     //capture output from model
     juce::String result = childProcess.readAllProcessOutput();
     result = result.removeCharacters(" \n\r");
     DBG("---"); DBG(result); DBG("---");
-
     //if success
-    if ( !result.isEmpty() ) {
+    if ( result.contains("SUCCESS")) {
         outputSampler.clearSounds();
-        //processing path file
-        pathToClip = result;
+        //processing path file ### hardcoded filepath
+        pathToClip = "/Users/willsaliba/Documents/Topics/diffusion-music/outputs/generated_clip.mp3";
         outputTrack = juce::File(pathToClip);
         outputFormatReader = outputFormatManager.createReaderFor(outputTrack);
         //adding sound to Sampler
@@ -191,11 +229,9 @@ bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::
     return false;
 }
 
-
-
-
-
+//==============================================================================
 //============================================================================== UNTOUCHED
+//==============================================================================
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -225,4 +261,4 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 juce::AudioProcessorEditor* MusicMagicAudioProcessor::createEditor()
 { return new MusicMagicAudioProcessorEditor (*this); } //new editor instance
 
-//==============================================================================
+//============================================================================== END
