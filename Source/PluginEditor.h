@@ -6,7 +6,8 @@
 class MusicMagicAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                         private juce::Timer,
                                         public juce::FileDragAndDropTarget,
-                                        public juce::DragAndDropContainer
+                                        public juce::DragAndDropContainer,
+                                        public juce::Slider::Listener
 {
 public:
     //constructor & destructor
@@ -29,7 +30,6 @@ private:
     juce::TextButton input_delete_button;
     void initialiseInputComponents();
     void updateInputTrackDesign();
-    
     //second input
     bool infillMode;
     juce::TextButton sec_input_load_box;
@@ -37,6 +37,18 @@ private:
     juce::TextButton sec_input_stop_button;
     juce::TextButton sec_input_delete_button;
     void updateSecInputTrackDesign();
+    
+    //input1 precise segment selection
+    juce::Slider firstStart;
+    juce::Slider firstEnd;
+    juce::TextButton firstStartCover;
+    juce::TextButton firstEndCover;
+    void sliderValueChanged(juce::Slider* slider) override;
+    //input2 precise segment selection
+    juce::Slider secStart;
+    juce::Slider secEnd;
+    juce::TextButton secStartCover;
+    juce::TextButton secEndCover;
     
     //randomness
     juce::Slider RandomnessSlider;

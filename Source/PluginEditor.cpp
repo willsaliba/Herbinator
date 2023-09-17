@@ -88,7 +88,11 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
 }
 
 //DESTRUCTOR
-MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor() {}
+MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor()
+{
+    firstStart.removeListener(this);
+    firstEnd.removeListener(this);
+}
 
 //non-functional graphics
 void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
@@ -171,15 +175,19 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
 void MusicMagicAudioProcessorEditor::resized()
 {
     //first input track
-    input_load_box.setBounds(100, 20, 260, 60);
+    input_load_box.setBounds(100, 22.5, 260, 55);
     input_play_button.setBounds(375, 35, 30, 30);
     input_stop_button.setBounds(410, 35, 30, 30);
     input_delete_button.setBounds(445, 35, 30, 30);
+    firstStart.setBounds(95, 10, 270, 20);
+    firstEnd.setBounds(95, 70, 270, 20);
     //second input track
-    sec_input_load_box.setBounds(295, 20, 180, 60);
+    sec_input_load_box.setBounds(295, 22.5, 180, 55);
     sec_input_play_button.setBounds(335, 90, 30, 30);
     sec_input_stop_button.setBounds(370, 90, 30, 30);
     sec_input_delete_button.setBounds(405, 90, 30, 30);
+    secStart.setBounds(290, 10, 190, 20);
+    secEnd.setBounds(290, 70, 190, 20);
     
     //action buttons    
     generateButton.setBounds(25, 188.5, 100, 20);
@@ -195,18 +203,14 @@ void MusicMagicAudioProcessorEditor::resized()
     
     //randomness
     RandomnessSlider.setBounds(173, 190, 150, 150);
-    
     //custom
     extendSlider.setBounds(345, 175, 130, 110);
     customSliderLabel.setBounds(363, 135, 100, 50);
-    
     //extend
     leftExtendButton.setBounds(380, 320, 30, 30);
     rightExtendButton.setBounds(415, 320, 30, 30);
-    
     //prompt
     userPrompt.setBounds(105, 395, 360, 30);
-    
     //generate music button
     generate_music_button.setBounds(125, 475, 250, 50);
     
@@ -253,6 +257,47 @@ void MusicMagicAudioProcessorEditor::initialiseInputComponents()
         updateInputTrackDesign();
     };
     addAndMakeVisible(input_delete_button);
+    
+    //first start & cover
+    firstStart.setRange(0.0, 100.0, 1.0);
+    firstStart.setValue(0.0);
+    firstStart.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    firstStart.addListener(this);
+    firstStart.setEnabled(false);
+    addAndMakeVisible(firstStart);
+    firstStartCover.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+    firstStartCover.setAlpha(0.5f);
+    firstStartCover.setAlwaysOnTop(true);
+    //first end & cover
+    firstEnd.setRange(0.0, 100.0, 1.0);
+    firstEnd.setValue(100.0);
+    firstEnd.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    firstEnd.addListener(this);
+    firstEnd.setEnabled(false);
+    addAndMakeVisible(firstEnd);
+    firstEndCover.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+    firstEndCover.setAlpha(0.5f);
+    firstEndCover.setAlwaysOnTop(true);
+    //second start & cover
+    secStart.setRange(0.0, 100.0, 1.0);
+    secStart.setValue(0.0);
+    secStart.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    secStart.addListener(this);
+    secStart.setAlwaysOnTop(true);
+    secStart.setEnabled(false);
+    secStartCover.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+    secStartCover.setAlpha(0.5f);
+    secStartCover.setAlwaysOnTop(true);
+    //second end & cover
+    secEnd.setRange(0.0, 100.0, 1.0);
+    secEnd.setValue(100.0);
+    secEnd.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    secEnd.addListener(this);
+    secEnd.setAlwaysOnTop(true);
+    secEnd.setEnabled(false);
+    secEndCover.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+    secEndCover.setAlpha(0.5f);
+    secEndCover.setAlwaysOnTop(true);
     
     //second input track box for infill
     infillMode = false;
@@ -342,15 +387,29 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
     
     infillMode = false;
     
+    //resizing input componenents
     input_load_box.setBounds(100, 20, 260, 60);
     input_play_button.setBounds(375, 35, 30, 30);
     input_stop_button.setBounds(410, 35, 30, 30);
     input_delete_button.setBounds(445, 35, 30, 30);
+    firstStart.setBounds(95, 10, 270, 20);
+    firstStart.setValue(0.0);
+    firstStartCover.setVisible(false);
+    firstEnd.setBounds(95, 70, 270, 20);
+    firstEnd.setValue(100.0);
+    firstEndCover.setVisible(false);
     
+    //making second input componenents invisible/reset
     sec_input_load_box.setVisible(false);
     sec_input_play_button.setVisible(false);
     sec_input_stop_button.setVisible(false);
     sec_input_delete_button.setVisible(false);
+    secStart.setVisible(false);
+    secEnd.setVisible(false);
+    secStartCover.setVisible(false);
+    secEndCover.setVisible(false);
+    secStart.setValue(0.0);
+    secEnd.setValue(100.0);
     
     if (action == "Generate") {
         addAndMakeVisible(input_cover);
@@ -362,15 +421,21 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
         addAndMakeVisible(extend_cover);
         addAndMakeVisible(randomiser_cover);
         //first track
-        input_load_box.setBounds(100, 20, 180, 60);
+        input_load_box.setBounds(100, 22.5, 180, 55);
         input_play_button.setBounds(140, 90, 30, 30);
         input_stop_button.setBounds(175, 90, 30, 30);
         input_delete_button.setBounds(210, 90, 30, 30);
+        //first segment percision
+        firstStart.setBounds(95, 10, 190, 20);
+        firstEnd.setBounds(95, 70, 190, 20);
         //second track
+        addAndMakeVisible(secStart);
+        addAndMakeVisible(secEnd);
         addAndMakeVisible(sec_input_load_box);
         addAndMakeVisible(sec_input_play_button);
         addAndMakeVisible(sec_input_stop_button);
         addAndMakeVisible(sec_input_delete_button);
+        
     } else if (action == "Replace") {
         addAndMakeVisible(extend_cover);
         addAndMakeVisible(custom_slider_cover);
@@ -398,12 +463,16 @@ void MusicMagicAudioProcessorEditor::updateInputTrackDesign()
         input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
         input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
         input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+        firstStart.setEnabled(true);
+        firstEnd.setEnabled(true);
     } else {
         input_load_box.setButtonText("Drag and Drop Or Click");
         input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        firstStart.setEnabled(false);
+        firstEnd.setEnabled(false);
     }
 }
 
@@ -415,12 +484,16 @@ void MusicMagicAudioProcessorEditor::updateSecInputTrackDesign()
         sec_input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
         sec_input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgreen);
         sec_input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+        secStart.setEnabled(true);
+        secEnd.setEnabled(true);
     } else {
         sec_input_load_box.setButtonText("Drag and Drop Or Click");
         sec_input_load_box.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         sec_input_delete_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         sec_input_play_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         sec_input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
+        secStart.setEnabled(false);
+        secEnd.setEnabled(false);
     }
 }
 
@@ -534,4 +607,47 @@ void MusicMagicAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
         filesToDrag.add( MusMagProcessor.getPath() );
         juce::DragAndDropContainer::performExternalDragDropOfFiles(filesToDrag, false, nullptr, nullptr);
     }
+}
+
+
+//=================================================================== Precise Segment Selection
+
+//changing slider values and covers
+void MusicMagicAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
+{
+    if (!infillMode && MusMagProcessor.getNumSamplerSounds() == 1) {
+        //when not infill
+        if (slider == &firstStart) {
+            int value = static_cast<int>(firstStart.getValue());
+            value = value * 2.6;
+            firstStartCover.setBounds(100, 22.5, value, 55);
+        } else if (slider == &firstEnd) {
+            int value = 100 - static_cast<int>(firstEnd.getValue());
+            value = value * 2.6;
+            firstEndCover.setBounds(360-value, 22.5, value, 55);
+        }
+    } else {
+        //infill mode
+        if (slider == &firstStart && MusMagProcessor.getNumSamplerSounds() == 1) {
+            int value = static_cast<int>(firstStart.getValue());
+            value = value * 1.8;
+            firstStartCover.setBounds(100, 22.5, value, 55);
+        } else if (slider == &firstEnd && MusMagProcessor.getNumSamplerSounds() == 1) {
+            int value = 100 - static_cast<int>(firstEnd.getValue());
+            value = value * 1.8;
+            firstEndCover.setBounds(280-value, 22.5, value, 55);
+        } else if (slider == &secStart && MusMagProcessor.getSecondNumSounds() == 1) {
+            int value = static_cast<int>(secStart.getValue());
+            value = value * 1.8;
+            secStartCover.setBounds(295, 22.5, value, 55);
+        } else if (slider == &secEnd && MusMagProcessor.getSecondNumSounds() == 1) {
+            int value = 100 - static_cast<int>(secEnd.getValue());
+            value = value * 1.8;
+            secEndCover.setBounds(475-value, 22.5, value, 55);
+        }
+    }
+    addAndMakeVisible(firstStartCover);
+    addAndMakeVisible(firstEndCover);
+    addAndMakeVisible(secStartCover);
+    addAndMakeVisible(secEndCover);
 }
