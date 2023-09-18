@@ -1,8 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
-
 //CONSTRUCTOR
 MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProperties()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
@@ -28,7 +26,7 @@ MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
     clearOutputSampler();
 }
 
-//================================================================= PLAYING SOUND
+// PLAYING SOUND =================================================================
 
 //predefined
 void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -38,13 +36,22 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-    
-    /*
-     
-     */
-    
-    //selecting which track to play
+        buffer.clear(i, 0, buffer.getNumSamples());
+
+    juce::MidiMessage m;
+    for (const juce::MidiMessageMetadata m : midiMessages) {
+        juce::MidiMessage message = m.getMessage();
+        if (message.isNoteOn()) {
+            isNotePlayed = true;
+        } else if (message.isNoteOff()) {
+            isNotePlayed = false;
+        }
+    }
+    sampleCount = isNotePlayed ? sampleCount += buffer.getNumSamples() : 0;
+
+    //figure out how to self terminate
+
+    // If song hasn't ended, continue processing
     if (trackPlaying == "in1") {
         firstSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     } else if (trackPlaying == "in2") {
@@ -53,6 +60,7 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
         outputSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     }
 }
+
 
 //predefined
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -65,6 +73,7 @@ void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 //sends MIDI notes to play selected song
 void MusicMagicAudioProcessor::sendMIDInotes()
 {
+    sendNoSound();
     juce::MidiBuffer midiMessages;
     midiMessages.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8)127), 0);
     juce::AudioBuffer<float> tempBuffer;
@@ -80,7 +89,7 @@ void MusicMagicAudioProcessor::sendNoSound()
     processBlock(tempBuffer, midiMessages);
 }
 
-// MANAGING TRACKS ==============================================================================
+// MANAGING TRACKS ===============================================================
 
 void MusicMagicAudioProcessor::loadInputFile()
 {
@@ -187,11 +196,11 @@ void MusicMagicAudioProcessor::clearOutputSampler()
 
 // MANAGING REQUESTS ==============================================================================
 
-bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side)
+bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side, juce::String firstStart, juce::String firstEnd, juce::String secStart, juce::String secEnd)
 {
-    //checking action selected
-    if (action == "Unselected") return false;
-    //checking if selected action has appropriate arguments
+    //checking universal conditions
+    if (firstStart > firstEnd || secStart > secEnd || action == "Unselected") return false;
+    //checking action specific conditions
     if (action == "Generate") {
         if (prompt != "") return true;
     } else if (action == "Replace") {
@@ -205,21 +214,38 @@ bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String
     return false;
 }
 
-bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side)
+bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side, juce::String firstStart, juce::String firstEnd, juce::String secStart, juce::String secEnd)
 {
     //converting args to std::string
     std::string thePrompt = prompt.toStdString();
     std::string theAction = action.toStdString();
     std::string theRandom = random.toStdString();
     std::string thePath = inputTrackPath.toStdString();
-    std::string theSecondPath = secondInputTrackPath.toStdString();
+    std::string secPath = secondInputTrackPath.toStdString();
     std::string theTime = time.toStdString();
     std::string theSide = side.toStdString();
+    std::string fStart = firstStart.toStdString();
+    std::string fEnd = firstEnd.toStdString();
+    std::string sStart = secStart.toStdString();
+    std::string sEnd = secEnd.toStdString();
+    
     //### hardcoded filepath
     std::string condaPythonPath = "/Users/willsaliba/opt/anaconda3/envs/riffusion/bin/python3";
     std::string modelPath = "/Users/willsaliba/Documents/Topics/diffusion-music";
-    std::string cmd = condaPythonPath + " " + modelPath +  "/plugin_requests.py \"" + thePrompt + "\" \"" + theAction + "\" \"" + theRandom + "\" \"" + thePath + "\" \"" + theSecondPath + "\" \"" + theTime + "\" \"" + theSide + "\"";
-    DBG("the command"); DBG(cmd);
+    std::string cmd = condaPythonPath + " " + modelPath +  "/plugin_requests.py \""
+        + thePrompt + "\" \""
+        + theAction + "\" \""
+        + theRandom + "\" \""
+        + thePath + "\" \""
+        + secPath + "\" \""
+        + theTime + "\" \""
+        + theSide + "\" \""
+        + fStart + "\" \""
+        + fEnd + "\" \""
+        + sStart + "\" \""
+        + sEnd + "\"";
+    
+    DBG(cmd);
     //juce run command process
     juce::ChildProcess childProcess;
     if (! childProcess.start(juce::String(cmd)) ) {
@@ -246,9 +272,7 @@ bool MusicMagicAudioProcessor::send_request_to_model(juce::String prompt, juce::
     return false;
 }
 
-//==============================================================================
-//============================================================================== UNTOUCHED
-//==============================================================================
+// PREDEFINED ==============================================================================
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -257,16 +281,13 @@ bool MusicMagicAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
     juce::ignoreUnused (layouts);
     return true;
   #else
-
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
-
    #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
    #endif
-
     return true;
   #endif
 }
@@ -277,5 +298,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 juce::AudioProcessorEditor* MusicMagicAudioProcessor::createEditor()
 { return new MusicMagicAudioProcessorEditor (*this); } //new editor instance
-
-//============================================================================== END

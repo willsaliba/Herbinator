@@ -78,10 +78,11 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
     generate_music_button.onClick = [&]() { ui_update_request_sent(); };
     addAndMakeVisible(generate_music_button);
-    sendingRequest = false;
 
     //OUTPUT COMPONENTS
     initialiseOutputComponents();
+    
+    startTimerHz(30);
 
     //size of window
     setSize (500, 640);
@@ -90,6 +91,7 @@ MusicMagicAudioProcessorEditor::MusicMagicAudioProcessorEditor (MusicMagicAudioP
 //DESTRUCTOR
 MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor()
 {
+    stopTimer();
     firstStart.removeListener(this);
     firstEnd.removeListener(this);
 }
@@ -117,7 +119,7 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
     if (MusMagProcessor.getNumSamplerSounds() == 1) {
         //setting it up
         float width = infillMode ? 180.0f : 260.0f;
-        g.setColour(juce::Colours::darkgrey);
+        g.setColour(juce::Colour(29, 29, 29));
         g.fillRect(100, 22.5, static_cast<int>(width), 55);
         g.setColour(juce::Colour(25, 160, 250));
         juce::Path p;
@@ -136,11 +138,17 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
             p.lineTo(sample + 100, point + 22.5); //adjusted x and y coordinates
         }
         g.strokePath(p, juce::PathStrokeType(2));
+        //playhead
+        if (MusMagProcessor.trackPlaying == "in1") {
+            auto playHeadPosition = juce::jmap<int>(MusMagProcessor.getSampleCount(), 0, MusMagProcessor.getFirstWaveForm().getNumSamples(), 100, width+100);
+            g.setColour(juce::Colours::white);
+            if (playHeadPosition <= width+100) g.drawLine(playHeadPosition, 22.5, playHeadPosition, 75, 2.0f);
+        }
     }
     //drawing second input track
     if (infillMode && MusMagProcessor.getSecondNumSounds() == 1) {
         //setting it up
-        g.setColour(juce::Colours::darkgrey);
+        g.setColour(juce::Colour(29, 29, 29));
         g.fillRect(295, 22.5, 180, 55);
         g.setColour(juce::Colour(25, 160, 250));
         juce::Path p;
@@ -159,6 +167,12 @@ void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)
             p.lineTo(sample + 295, point + 22.5); //adjusted x and y coordinates
         }
         g.strokePath(p, juce::PathStrokeType(2));
+        //playhead
+        if (MusMagProcessor.trackPlaying == "in2") {
+            auto playHeadPosition = juce::jmap<int>(MusMagProcessor.getSampleCount(), 0, MusMagProcessor.getFirstWaveForm().getNumSamples(), 295, 475);
+            g.setColour(juce::Colours::white);
+            if (playHeadPosition <= 475) g.drawLine(playHeadPosition, 22.5, playHeadPosition, 75, 2.0f);
+        }
     }
     
     //action square
@@ -422,9 +436,7 @@ void MusicMagicAudioProcessorEditor::initialiseOutputComponents()
 void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce::String action)
 {
     resetEverything();
-    
     onButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-    
     //specific controls
     if (action == "Generate") {
         addAndMakeVisible(input_cover);
@@ -465,7 +477,8 @@ void MusicMagicAudioProcessorEditor::toggleOn(juce::ToggleButton& onButton, juce
     repaint();
 }
 
-void MusicMagicAudioProcessorEditor::resetEverything() {
+void MusicMagicAudioProcessorEditor::resetEverything()
+{
     //reseting buttons
     extendButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     fillButton.setToggleState(false, juce::NotificationType::dontSendNotification);
@@ -524,6 +537,8 @@ void MusicMagicAudioProcessorEditor::updateInputTrackDesign()
         input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         firstStart.setEnabled(false);
         firstEnd.setEnabled(false);
+        firstStartCover.setBounds(0, 0, 0, 0);
+        firstEndCover.setBounds(0, 0, 0, 0);
     }
     firstStart.setValue(0.0);
     firstEnd.setValue(100.0);
@@ -546,6 +561,8 @@ void MusicMagicAudioProcessorEditor::updateSecInputTrackDesign()
         sec_input_stop_button.setColour(juce::TextButton::buttonColourId, juce::Colours::darkgrey);
         secStart.setEnabled(false);
         secEnd.setEnabled(false);
+        secStartCover.setBounds(0, 0, 0, 0);
+        secEndCover.setBounds(0, 0, 0, 0);
     }
     secStart.setValue(0.0);
     secEnd.setValue(100.0);
@@ -576,34 +593,20 @@ void MusicMagicAudioProcessorEditor::ui_red_update(juce::String msg)
 {
     generate_music_button.setButtonText(msg);
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-    startTimer(3500);
 }
 
 void MusicMagicAudioProcessorEditor::ui_update_request_sent()
 {
-    sendingRequest = true;
     generate_music_button.setButtonText("Request Sent!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::purple);
-    startTimer(750);
+    generate_request();
 }
 
 void MusicMagicAudioProcessorEditor::ui_request_success()
 {
     generate_music_button.setButtonText("Request Succeeded!");
     generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colour(190, 0, 180));
-    startTimer(2500);
-}
-
-//calling generate_request // resetting UI appearance
-void MusicMagicAudioProcessorEditor::timerCallback()
-{
-    stopTimer();
-    if (sendingRequest) {
-        generate_request();
-    } else {
-        generate_music_button.setButtonText("GENERATE MUSIC!");
-        generate_music_button.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-    }
+    updateOutputTrackDesign();
 }
 
 void MusicMagicAudioProcessorEditor::generate_request()
@@ -613,23 +616,24 @@ void MusicMagicAudioProcessorEditor::generate_request()
     juce::String randomness = juce::String(static_cast<int>(RandomnessSlider.getValueObject().getValue()));
     juce::String time = juce::String(static_cast<float>(extendSlider.getValueObject().getValue()));
     juce::String action;
+    juce::String fStart = juce::String(static_cast<int>(firstStart.getValueObject().getValue()));
+    juce::String fEnd = juce::String(static_cast<int>(firstEnd.getValueObject().getValue()));
+    juce::String sStart = juce::String(static_cast<int>(secStart.getValueObject().getValue()));
+    juce::String sEnd = juce::String(static_cast<int>(secEnd.getValueObject().getValue()));
+    
     if (extendButton.getToggleState())        action = "Extend";
     else if (replaceButton.getToggleState())  action = "Replace";
     else if (fillButton.getToggleState())     action = "Fill";
     else if (generateButton.getToggleState()) action = "Generate";
     else action = "Unselected";
     //send request to processor & update UI
-    sendingRequest = false;
-    if (MusMagProcessor.process_request(prompt, action, randomness, time, side)) {
-        MusMagProcessor.send_request_to_model(prompt, action, randomness, time, side);
-        if (MusMagProcessor.getNumOutputSounds() == 0) {
-            ui_red_update("Request Valid but Failed. Ensure the Model's Server is Active");
-        } else {
-            ui_request_success();
-            updateOutputTrackDesign();
-        }
+    if (MusMagProcessor.process_request(prompt, action, randomness, time, side, fStart, fEnd, sStart, sEnd)) {
+        MusMagProcessor.send_request_to_model(prompt, action, randomness, time, side, fStart, fEnd, sStart, sEnd);
+        if (MusMagProcessor.getNumOutputSounds() == 0) ui_red_update("Request Valid but Failed");
+        else ui_request_success();
+    } else {
+        ui_red_update("Request Invalid");
     }
-    else ui_red_update("Request Invalid");
 }
 
 //=================================================================== Drag & Drop IO
@@ -672,32 +676,29 @@ void MusicMagicAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 {
     if (!infillMode && MusMagProcessor.getNumSamplerSounds() == 1) {
         //when not infill
-        if (slider == &firstStart) {
-            int value = static_cast<int>(firstStart.getValue());
-            value = value * 2.6;
-            firstStartCover.setBounds(100, 22.5, value, 55);
-        } else if (slider == &firstEnd) {
-            int value = 100 - static_cast<int>(firstEnd.getValue());
-            value = value * 2.6;
-            firstEndCover.setBounds(360-value, 22.5, value, 55);
-        }
+        int value = static_cast<int>(firstStart.getValue());
+        value = value * 2.6;
+        firstStartCover.setBounds(100, 22.5, value, 55);
+        value = 100 - static_cast<int>(firstEnd.getValue());
+        value = value * 2.6;
+        firstEndCover.setBounds(360-value, 22.5, value, 55);
+        
     } else {
         //infill mode
-        if (slider == &firstStart && MusMagProcessor.getNumSamplerSounds() == 1) {
+        if (MusMagProcessor.getNumSamplerSounds() == 1) {
             int value = static_cast<int>(firstStart.getValue());
-            value = value * 1.8;
+            value *= 1.8;
             firstStartCover.setBounds(100, 22.5, value, 55);
-        } else if (slider == &firstEnd && MusMagProcessor.getNumSamplerSounds() == 1) {
-            int value = 100 - static_cast<int>(firstEnd.getValue());
-            value = value * 1.8;
+            value = 100 - static_cast<int>(firstEnd.getValue());
+            value *= 1.8;
             firstEndCover.setBounds(280-value, 22.5, value, 55);
-        } else if (slider == &secStart && MusMagProcessor.getSecondNumSounds() == 1) {
+        }
+        if (MusMagProcessor.getSecondNumSounds() == 1) {
             int value = static_cast<int>(secStart.getValue());
-            value = value * 1.8;
+            value *= 1.8;
             secStartCover.setBounds(295, 22.5, value, 55);
-        } else if (slider == &secEnd && MusMagProcessor.getSecondNumSounds() == 1) {
-            int value = 100 - static_cast<int>(secEnd.getValue());
-            value = value * 1.8;
+            value = 100 - static_cast<int>(secEnd.getValue());
+            value *= 1.8;
             secEndCover.setBounds(475-value, 22.5, value, 55);
         }
     }

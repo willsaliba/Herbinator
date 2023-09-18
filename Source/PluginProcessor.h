@@ -69,8 +69,12 @@ public:
     int getNumOutputSounds() { return outputSampler.getNumSounds(); };
     
     //making request
-    bool process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side);
-    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side);
+    bool process_request(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side, juce::String firstStart, juce::String firstEnd, juce::String secStart, juce::String secEnd);
+    bool send_request_to_model(juce::String prompt, juce::String action, juce::String random, juce::String time, juce::String side, juce::String firstStart, juce::String firstEnd, juce::String secStart, juce::String secEnd);
+    
+    //playhead
+    std::atomic<bool>& isNoteBeingPlayed() { return isNotePlayed; };
+    std::atomic<int>& getSampleCount() { return sampleCount; };
     
 private:
     //Playing First Input Track
@@ -89,6 +93,11 @@ private:
     juce::Synthesiser outputSampler;
     juce::AudioFormatManager outputFormatManager;
     juce::AudioFormatReader* outputFormatReader { nullptr };
+    
+    //playhead
+    std::atomic<bool> shouldUpdate {false};
+    std::atomic<bool> isNotePlayed {false};
+    std::atomic<int> sampleCount { 0 };
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MusicMagicAudioProcessor)

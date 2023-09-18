@@ -23,15 +23,21 @@ public:
     void filesDropped (const juce::StringArray &files, int x, int y) override;
     
 private:
-    //input
+    
+    //First Input
     juce::TextButton input_load_box;
     juce::TextButton input_play_button;
     juce::TextButton input_stop_button;
     juce::TextButton input_delete_button;
-    void initialiseInputComponents();
     void updateInputTrackDesign();
     std::vector<float> firstAudioPoints;
-    //second input
+    //input1 precise segment selection
+    juce::Slider firstStart;
+    juce::Slider firstEnd;
+    juce::TextButton firstStartCover;
+    juce::TextButton firstEndCover;
+    
+    //Second Input (for infill mode)
     bool infillMode {false};
     juce::TextButton sec_input_load_box;
     juce::TextButton sec_input_play_button;
@@ -39,19 +45,17 @@ private:
     juce::TextButton sec_input_delete_button;
     void updateSecInputTrackDesign();
     std::vector<float> secAudioPoints;
-    
-    //input1 precise segment selection
-    juce::Slider firstStart;
-    juce::Slider firstEnd;
-    juce::TextButton firstStartCover;
-    juce::TextButton firstEndCover;
-    void sliderValueChanged(juce::Slider* slider) override;
     //input2 precise segment selection
     juce::Slider secStart;
     juce::Slider secEnd;
     juce::TextButton secStartCover;
     juce::TextButton secEndCover;
     
+    //For Both Inputs
+    void initialiseInputComponents();
+    void timerCallback() override { repaint(); };
+    void sliderValueChanged(juce::Slider* slider) override;
+
     //randomness
     juce::Slider RandomnessSlider;
     
@@ -78,8 +82,6 @@ private:
     
     //generate
     juce::TextButton generate_music_button;
-    bool sendingRequest;
-    void timerCallback() override;
     void ui_red_update(juce::String msg);
     void ui_update_request_sent();
     void ui_request_success();
