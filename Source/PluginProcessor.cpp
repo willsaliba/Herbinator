@@ -1,7 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//CONSTRUCTOR
 MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProperties()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
@@ -18,7 +17,6 @@ MusicMagicAudioProcessor::MusicMagicAudioProcessor() : AudioProcessor (BusesProp
     outputSampler.addVoice(new juce::SamplerVoice());
 }
 
-//DESTRUCTOR
 MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 {
     clearInputSampler();
@@ -28,7 +26,6 @@ MusicMagicAudioProcessor::~MusicMagicAudioProcessor()
 
 // PLAYING SOUND =================================================================
 
-//predefined
 void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //clear any other sounds playing
@@ -61,8 +58,6 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     }
 }
 
-
-//predefined
 void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     firstSampler.setCurrentPlaybackSampleRate(sampleRate);
@@ -70,7 +65,6 @@ void MusicMagicAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     outputSampler.setCurrentPlaybackSampleRate(sampleRate);
 }
 
-//sends MIDI notes to play selected song
 void MusicMagicAudioProcessor::sendMIDInotes()
 {
     sendNoSound();
@@ -80,7 +74,6 @@ void MusicMagicAudioProcessor::sendMIDInotes()
     processBlock(tempBuffer, midiMessages);
 }
 
-//sends 0 freq MIDI to play no sound
 void MusicMagicAudioProcessor::sendNoSound()
 {
     juce::MidiBuffer midiMessages;

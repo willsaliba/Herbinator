@@ -86,6 +86,7 @@ private:
     void ui_update_request_sent();
     void ui_request_success();
     void generate_request();
+    juce::Label feedback;
     
     //output
     juce::TextButton output_track_box;
