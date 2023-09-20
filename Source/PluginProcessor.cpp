@@ -32,9 +32,11 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear(i, 0, buffer.getNumSamples());
+    int actualBufferChannels = buffer.getNumChannels();
+    for (auto i = totalNumInputChannels; i < juce::jmin(totalNumOutputChannels, actualBufferChannels); ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
 
+    //for playhead
     juce::MidiMessage m;
     for (const juce::MidiMessageMetadata m : midiMessages) {
         juce::MidiMessage message = m.getMessage();
@@ -46,9 +48,7 @@ void MusicMagicAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     }
     sampleCount = isNotePlayed ? sampleCount += buffer.getNumSamples() : 0;
 
-    //figure out how to self terminate
-
-    // If song hasn't ended, continue processing
+    //playing the correct track
     if (trackPlaying == "in1") {
         firstSampler.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     } else if (trackPlaying == "in2") {
@@ -197,6 +197,7 @@ bool MusicMagicAudioProcessor::process_request(juce::String prompt, juce::String
     if (action == "Generate") {
         if (prompt != "") return true;
     } else if (action == "Replace") {
+        DBG("making it");
         if (prompt != "" && inputTrackPath != "null") return true;
     } else if (action == "Extend") {
         if (prompt != "" && inputTrackPath != "null" && side != "null") return true;

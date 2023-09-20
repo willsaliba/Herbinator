@@ -96,6 +96,8 @@ MusicMagicAudioProcessorEditor::~MusicMagicAudioProcessorEditor()
     stopTimer();
     firstStart.removeListener(this);
     firstEnd.removeListener(this);
+    secStart.removeListener(this);
+    secEnd.removeListener(this);
 }
 
 void MusicMagicAudioProcessorEditor::paint(juce::Graphics& g)

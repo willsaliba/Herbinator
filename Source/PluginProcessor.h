@@ -1,11 +1,9 @@
 /* JUCE Plugin Processor --- BACK END --- */
-
 #pragma once
 #include <JuceHeader.h>
 
 class MusicMagicAudioProcessor  : public juce::AudioProcessor
                                 #if JucePlugin_Enable_ARA
-                                    DBG("true dude")
                                  , public juce::AudioProcessorARAExtension
                                 #endif
 {
